@@ -35,6 +35,7 @@ final class AppController {
     private let hotkeyManager: HotkeyManager
     private let pasteService: PasteService
     private var panelController: PanelController?
+    private var started = false
 
     init() {
         self.preferences = Preferences()
@@ -44,7 +45,6 @@ final class AppController {
         self.pasteService = PasteService(monitor: monitor)
 
         storage.historyLimit = preferences.historyLimit
-
         monitor.excludedBundleIDs = preferences.excludedBundleIDs
         monitor.isPaused = preferences.isPaused
 
@@ -71,9 +71,18 @@ final class AppController {
             self?.togglePanel()
         }
 
+        // Defer service startup so it doesn't interfere with MenuBarExtra setup
+        DispatchQueue.main.async { [self] in
+            self.startServices()
+        }
+    }
+
+    private func startServices() {
+        guard !started else { return }
+        started = true
         monitor.start()
-        requestAccessibilityIfNeeded()
         hotkeyManager.start()
+        requestAccessibilityIfNeeded()
     }
 
     private nonisolated func requestAccessibilityIfNeeded() {
