@@ -72,7 +72,18 @@ final class AppController {
         }
 
         monitor.start()
+        requestAccessibilityIfNeeded()
         hotkeyManager.start()
+    }
+
+    private nonisolated func requestAccessibilityIfNeeded() {
+        let key = "AXTrustedCheckOptionPrompt" as CFString
+        let trusted = AXIsProcessTrustedWithOptions(
+            [key: true] as CFDictionary
+        )
+        if !trusted {
+            print("Stash: Accessibility access required for global hotkey (Cmd+Shift+V)")
+        }
     }
 
     func paste(_ entry: ClipboardEntry) {
