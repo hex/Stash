@@ -9,10 +9,10 @@ struct MenuBarView: View {
     let onPaste: (ClipboardEntry) -> Void
     let onOpenPanel: () -> Void
 
-    @State private var recentEntries: [ClipboardEntry] = []
-
     var body: some View {
-        ForEach(recentEntries.prefix(5), id: \.persistentModelID) { entry in
+        let entries = (try? storage.fetchAll()) ?? []
+
+        ForEach(entries.prefix(5), id: \.persistentModelID) { entry in
             Button {
                 onPaste(entry)
             } label: {
@@ -21,9 +21,8 @@ struct MenuBarView: View {
             }
         }
 
-        if recentEntries.isEmpty {
+        if entries.isEmpty {
             Text("No clipboard history")
-                .foregroundStyle(.secondary)
         }
 
         Divider()

@@ -7,24 +7,26 @@ import AppKit
 final class HotkeyManager {
     var onHotkey: (() -> Void)?
 
-    /// Key code for 'V' on macOS
-    private static let defaultKeyCode: UInt16 = 0x09
-    private static let defaultModifiers: NSEvent.ModifierFlags = [.command, .shift]
+    private nonisolated static let hotkeyCode: UInt16 = 0x09
+    private nonisolated static let hotkeyModifiers: NSEvent.ModifierFlags = [.command, .shift]
 
     private var globalMonitor: Any?
     private var localMonitor: Any?
 
     func start() {
         globalMonitor = NSEvent.addGlobalMonitorForEvents(matching: .keyDown) { [weak self] event in
-            self?.handleKeyEvent(event)
+            guard Self.isHotkey(event) else { return }
+            DispatchQueue.main.async {
+                self?.onHotkey?()
+            }
         }
 
         localMonitor = NSEvent.addLocalMonitorForEvents(matching: .keyDown) { [weak self] event in
-            if self?.isHotkey(event) == true {
+            guard Self.isHotkey(event) else { return event }
+            DispatchQueue.main.async {
                 self?.onHotkey?()
-                return nil // consume the event
             }
-            return event
+            return nil
         }
     }
 
@@ -39,14 +41,8 @@ final class HotkeyManager {
         }
     }
 
-    private func handleKeyEvent(_ event: NSEvent) {
-        if isHotkey(event) {
-            onHotkey?()
-        }
-    }
-
-    private func isHotkey(_ event: NSEvent) -> Bool {
-        event.keyCode == Self.defaultKeyCode
-            && event.modifierFlags.intersection(.deviceIndependentFlagsMask) == Self.defaultModifiers
+    private nonisolated static func isHotkey(_ event: NSEvent) -> Bool {
+        event.keyCode == hotkeyCode
+            && event.modifierFlags.intersection(.deviceIndependentFlagsMask) == hotkeyModifiers
     }
 }
