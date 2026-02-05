@@ -14,7 +14,8 @@ struct StashApp: App {
                 storage: appController.storage,
                 preferences: appController.preferences,
                 onPaste: { entry in appController.paste(entry) },
-                onOpenPanel: { appController.togglePanel() }
+                onOpenPanel: { appController.togglePanel() },
+                onPauseChanged: { appController.setPaused($0) }
             )
         }
         .menuBarExtraStyle(.menu)
@@ -101,5 +102,10 @@ final class AppController {
 
     func togglePanel() {
         panelController?.toggle()
+    }
+
+    func setPaused(_ isPaused: Bool) {
+        preferences.isPaused = isPaused
+        monitor.isPaused = isPaused
     }
 }
