@@ -12,12 +12,9 @@ struct MenuBarView: View {
     var body: some View {
         let entries = (try? storage.fetchAll()) ?? []
 
-        ForEach(entries.prefix(5), id: \.persistentModelID) { entry in
-            Button {
+        ForEach(Array(entries.prefix(5)), id: \.persistentModelID) { entry in
+            Button(menuLabel(for: entry)) {
                 onPaste(entry)
-            } label: {
-                Text(menuLabel(for: entry))
-                    .lineLimit(1)
             }
         }
 
