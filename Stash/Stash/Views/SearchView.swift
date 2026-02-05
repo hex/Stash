@@ -1,5 +1,5 @@
 // ABOUTME: Root view for the floating panel: search field, content filter, and entry list.
-// ABOUTME: Keyboard-driven: arrows navigate, Enter selects, Esc dismisses, typing searches.
+// ABOUTME: Keyboard-driven: arrows navigate, Enter selects, Esc dismisses, Cmd+1-9 quick select.
 
 import SwiftUI
 import SwiftData
@@ -19,11 +19,23 @@ struct SearchView: View {
             filterBar
             Divider()
             entryList
+
+            if entries.isEmpty {
+                Spacer()
+                Text(searchText.isEmpty ? "No clipboard history yet" : "No matching entries")
+                    .foregroundStyle(.secondary)
+                    .font(.body)
+                Spacer()
+            }
         }
         .frame(width: 640, height: 420)
         .background(.ultraThinMaterial)
         .clipShape(RoundedRectangle(cornerRadius: 12))
-        .onAppear { refreshEntries() }
+        .onAppear {
+            searchText = ""
+            selectedIndex = 0
+            refreshEntries()
+        }
     }
 
     private var searchField: some View {
@@ -52,6 +64,9 @@ struct SearchView: View {
                 .onKeyPress(.escape) {
                     NSApp.keyWindow?.orderOut(nil)
                     return .handled
+                }
+                .onKeyPress(characters: .decimalDigits, phases: .down) { press in
+                    handleQuickSelect(press)
                 }
         }
         .padding(12)
@@ -93,11 +108,23 @@ struct SearchView: View {
             ScrollView {
                 LazyVStack(spacing: 2) {
                     ForEach(Array(entries.enumerated()), id: \.element.persistentModelID) { index, entry in
-                        EntryRowView(entry: entry, isSelected: index == selectedIndex)
-                            .id(index)
-                            .onTapGesture {
-                                onSelect(entry)
+                        HStack(spacing: 4) {
+                            if index < 9 {
+                                Text("\(index + 1)")
+                                    .font(.caption2.monospaced())
+                                    .foregroundStyle(.tertiary)
+                                    .frame(width: 16)
+                            } else {
+                                Spacer().frame(width: 16)
                             }
+
+                            EntryRowView(entry: entry, isSelected: index == selectedIndex)
+                        }
+                        .id(index)
+                        .contentShape(Rectangle())
+                        .onTapGesture {
+                            onSelect(entry)
+                        }
                     }
                 }
                 .padding(.horizontal, 8)
@@ -134,5 +161,17 @@ struct SearchView: View {
     private func selectCurrent() {
         guard selectedIndex >= 0 && selectedIndex < entries.count else { return }
         onSelect(entries[selectedIndex])
+    }
+
+    /// Cmd+1 through Cmd+9 for quick entry selection
+    private func handleQuickSelect(_ press: KeyPress) -> KeyPress.Result {
+        guard press.modifiers.contains(.command) else { return .ignored }
+        guard let digit = press.characters.first?.wholeNumberValue,
+              digit >= 1 && digit <= 9 else { return .ignored }
+
+        let index = digit - 1
+        guard index < entries.count else { return .ignored }
+        onSelect(entries[index])
+        return .handled
     }
 }
