@@ -4,6 +4,7 @@
 import Foundation
 import SwiftData
 
+@MainActor
 final class StorageManager {
     let container: ModelContainer
     let context: ModelContext

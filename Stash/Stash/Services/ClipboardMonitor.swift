@@ -4,6 +4,7 @@
 import AppKit
 import Foundation
 
+@MainActor
 final class ClipboardMonitor {
     typealias ChangeHandler = (ContentType, String?, String?, [String]?, Data?, Data?, String?, String?) -> Void
 
@@ -36,7 +37,7 @@ final class ClipboardMonitor {
 
     // MARK: - Static filtering (testable)
 
-    static func shouldSkip(
+    nonisolated static func shouldSkip(
         types: [NSPasteboard.PasteboardType],
         excludedBundleIDs: Set<String>,
         frontmostBundleID: String? = nil

@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		0CA62297506C140A38D8C8B9 /* EntryRowView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1D72F8DD92937F33B5E5F8C7 /* EntryRowView.swift */; };
 		145AAE446D0667AE9A7F34AB /* HotkeyManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 54B0E40D64B706583C9F9D70 /* HotkeyManager.swift */; };
 		1CD2A6438BEFD33E48A9AE84 /* ClipboardMonitor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5914DE52FE026475F88B6FED /* ClipboardMonitor.swift */; };
 		426CE6054B62B75E52494B93 /* ContentType.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7C3978B293FAB87F437B2D89 /* ContentType.swift */; };
@@ -15,11 +16,14 @@
 		58FB4F10CAD9D42EC3485FA0 /* PasteboardConstants.swift in Sources */ = {isa = PBXBuildFile; fileRef = 336AEB429DB905D6E693F12A /* PasteboardConstants.swift */; };
 		5B2A7058923FF34722A057F2 /* ClipboardEntry.swift in Sources */ = {isa = PBXBuildFile; fileRef = EE7EB90657F893E735D65E26 /* ClipboardEntry.swift */; };
 		7586E6278DC288374F8287D8 /* ContentTypeTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 590A85722B89EC1934850786 /* ContentTypeTests.swift */; };
+		861C062E082ED4E280F9C221 /* PanelController.swift in Sources */ = {isa = PBXBuildFile; fileRef = E2E90FEA03F58F315939BD6A /* PanelController.swift */; };
+		9FD624406ADCED362218119E /* SearchView.swift in Sources */ = {isa = PBXBuildFile; fileRef = DEFD9334B588385C9AC1BC8B /* SearchView.swift */; };
 		A54DFE329CCFD7626C2C3096 /* PreferencesTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C1BAF2E42C8667F827D380BE /* PreferencesTests.swift */; };
 		B40ABE2D442B6197F78A09D6 /* MenuBarView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 05CC4F69A65849188846F652 /* MenuBarView.swift */; };
 		B62976F5DA550779DE8DF681 /* StashTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 78C2153EC4FE0F1C715F13D6 /* StashTests.swift */; };
 		B790160B7DAAC2FA787342DD /* StashApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 18DBCC4E2EF53EB5BDC7A134 /* StashApp.swift */; };
 		CADDA1DFC470257E3F084CDC /* Preferences.swift in Sources */ = {isa = PBXBuildFile; fileRef = B49BB01FA9B8AC8C4CA65511 /* Preferences.swift */; };
+		D39668C28276D16C06C9DB02 /* FloatingPanel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 81EF2A71F82A7A8FD9CDF88D /* FloatingPanel.swift */; };
 		D936FEC241FC04E795647794 /* ClipboardEntryTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 155A9904AA293878B64E9325 /* ClipboardEntryTests.swift */; };
 		E80FD730A3D17A03F4365824 /* StorageManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8743F0AF18752419DE6CAC97 /* StorageManager.swift */; };
 		F104DE77DA893A46FE0CF7BA /* ClipboardMonitorTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 75C2F5E8267415CB0256C6BA /* ClipboardMonitorTests.swift */; };
@@ -40,6 +44,7 @@
 		155A9904AA293878B64E9325 /* ClipboardEntryTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClipboardEntryTests.swift; sourceTree = "<group>"; };
 		18DBCC4E2EF53EB5BDC7A134 /* StashApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StashApp.swift; sourceTree = "<group>"; };
 		1997BB250F22C3DDD397F0F3 /* StorageManagerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StorageManagerTests.swift; sourceTree = "<group>"; };
+		1D72F8DD92937F33B5E5F8C7 /* EntryRowView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EntryRowView.swift; sourceTree = "<group>"; };
 		320F7C11A1446E642285C4D4 /* Stash.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = Stash.entitlements; sourceTree = "<group>"; };
 		336AEB429DB905D6E693F12A /* PasteboardConstants.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PasteboardConstants.swift; sourceTree = "<group>"; };
 		54B0E40D64B706583C9F9D70 /* HotkeyManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HotkeyManager.swift; sourceTree = "<group>"; };
@@ -48,10 +53,13 @@
 		75C2F5E8267415CB0256C6BA /* ClipboardMonitorTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClipboardMonitorTests.swift; sourceTree = "<group>"; };
 		78C2153EC4FE0F1C715F13D6 /* StashTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StashTests.swift; sourceTree = "<group>"; };
 		7C3978B293FAB87F437B2D89 /* ContentType.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentType.swift; sourceTree = "<group>"; };
+		81EF2A71F82A7A8FD9CDF88D /* FloatingPanel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FloatingPanel.swift; sourceTree = "<group>"; };
 		8743F0AF18752419DE6CAC97 /* StorageManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StorageManager.swift; sourceTree = "<group>"; };
 		B0553447F301994707851C31 /* StashTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = StashTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		B49BB01FA9B8AC8C4CA65511 /* Preferences.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Preferences.swift; sourceTree = "<group>"; };
 		C1BAF2E42C8667F827D380BE /* PreferencesTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PreferencesTests.swift; sourceTree = "<group>"; };
+		DEFD9334B588385C9AC1BC8B /* SearchView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SearchView.swift; sourceTree = "<group>"; };
+		E2E90FEA03F58F315939BD6A /* PanelController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PanelController.swift; sourceTree = "<group>"; };
 		EE7EB90657F893E735D65E26 /* ClipboardEntry.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClipboardEntry.swift; sourceTree = "<group>"; };
 		FB0FE92F4B2DA1E7CC7DF3AD /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 		FE48DBAB68E9E944D7AA11A7 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
@@ -65,6 +73,15 @@
 				C1BAF2E42C8667F827D380BE /* PreferencesTests.swift */,
 			);
 			path = Support;
+			sourceTree = "<group>";
+		};
+		19288A8128F340BC5A20EEDF /* Panel */ = {
+			isa = PBXGroup;
+			children = (
+				81EF2A71F82A7A8FD9CDF88D /* FloatingPanel.swift */,
+				E2E90FEA03F58F315939BD6A /* PanelController.swift */,
+			);
+			path = Panel;
 			sourceTree = "<group>";
 		};
 		1AD3AD23F5B4B0B7C0BCD208 /* Support */ = {
@@ -130,6 +147,7 @@
 				320F7C11A1446E642285C4D4 /* Stash.entitlements */,
 				18DBCC4E2EF53EB5BDC7A134 /* StashApp.swift */,
 				609DEB17A5D3D8C832F2269E /* Model */,
+				19288A8128F340BC5A20EEDF /* Panel */,
 				BB45C1F26DFB869B198A4BEB /* Services */,
 				1AD3AD23F5B4B0B7C0BCD208 /* Support */,
 				D7A00AFBA6C712255B27AAB1 /* Views */,
@@ -140,7 +158,9 @@
 		D7A00AFBA6C712255B27AAB1 /* Views */ = {
 			isa = PBXGroup;
 			children = (
+				1D72F8DD92937F33B5E5F8C7 /* EntryRowView.swift */,
 				05CC4F69A65849188846F652 /* MenuBarView.swift */,
+				DEFD9334B588385C9AC1BC8B /* SearchView.swift */,
 			);
 			path = Views;
 			sourceTree = "<group>";
@@ -252,10 +272,14 @@
 				5B2A7058923FF34722A057F2 /* ClipboardEntry.swift in Sources */,
 				1CD2A6438BEFD33E48A9AE84 /* ClipboardMonitor.swift in Sources */,
 				426CE6054B62B75E52494B93 /* ContentType.swift in Sources */,
+				0CA62297506C140A38D8C8B9 /* EntryRowView.swift in Sources */,
+				D39668C28276D16C06C9DB02 /* FloatingPanel.swift in Sources */,
 				145AAE446D0667AE9A7F34AB /* HotkeyManager.swift in Sources */,
 				B40ABE2D442B6197F78A09D6 /* MenuBarView.swift in Sources */,
+				861C062E082ED4E280F9C221 /* PanelController.swift in Sources */,
 				58FB4F10CAD9D42EC3485FA0 /* PasteboardConstants.swift in Sources */,
 				CADDA1DFC470257E3F084CDC /* Preferences.swift in Sources */,
+				9FD624406ADCED362218119E /* SearchView.swift in Sources */,
 				B790160B7DAAC2FA787342DD /* StashApp.swift in Sources */,
 				E80FD730A3D17A03F4365824 /* StorageManager.swift in Sources */,
 			);
