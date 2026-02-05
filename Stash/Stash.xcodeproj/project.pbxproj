@@ -7,10 +7,14 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		426CE6054B62B75E52494B93 /* ContentType.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7C3978B293FAB87F437B2D89 /* ContentType.swift */; };
 		4ABC5F74D2C361C0431B2911 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = FE48DBAB68E9E944D7AA11A7 /* Assets.xcassets */; };
+		5B2A7058923FF34722A057F2 /* ClipboardEntry.swift in Sources */ = {isa = PBXBuildFile; fileRef = EE7EB90657F893E735D65E26 /* ClipboardEntry.swift */; };
+		7586E6278DC288374F8287D8 /* ContentTypeTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 590A85722B89EC1934850786 /* ContentTypeTests.swift */; };
 		B40ABE2D442B6197F78A09D6 /* MenuBarView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 05CC4F69A65849188846F652 /* MenuBarView.swift */; };
 		B62976F5DA550779DE8DF681 /* StashTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 78C2153EC4FE0F1C715F13D6 /* StashTests.swift */; };
 		B790160B7DAAC2FA787342DD /* StashApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 18DBCC4E2EF53EB5BDC7A134 /* StashApp.swift */; };
+		D936FEC241FC04E795647794 /* ClipboardEntryTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 155A9904AA293878B64E9325 /* ClipboardEntryTests.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -25,10 +29,14 @@
 
 /* Begin PBXFileReference section */
 		05CC4F69A65849188846F652 /* MenuBarView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MenuBarView.swift; sourceTree = "<group>"; };
+		155A9904AA293878B64E9325 /* ClipboardEntryTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClipboardEntryTests.swift; sourceTree = "<group>"; };
 		18DBCC4E2EF53EB5BDC7A134 /* StashApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StashApp.swift; sourceTree = "<group>"; };
 		320F7C11A1446E642285C4D4 /* Stash.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = Stash.entitlements; sourceTree = "<group>"; };
+		590A85722B89EC1934850786 /* ContentTypeTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentTypeTests.swift; sourceTree = "<group>"; };
 		78C2153EC4FE0F1C715F13D6 /* StashTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StashTests.swift; sourceTree = "<group>"; };
+		7C3978B293FAB87F437B2D89 /* ContentType.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentType.swift; sourceTree = "<group>"; };
 		B0553447F301994707851C31 /* StashTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = StashTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		EE7EB90657F893E735D65E26 /* ClipboardEntry.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClipboardEntry.swift; sourceTree = "<group>"; };
 		FB0FE92F4B2DA1E7CC7DF3AD /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 		FE48DBAB68E9E944D7AA11A7 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		FF2AED5E66FAB2122C8437E2 /* Stash.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Stash.app; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -53,6 +61,24 @@
 			);
 			sourceTree = "<group>";
 		};
+		609DEB17A5D3D8C832F2269E /* Model */ = {
+			isa = PBXGroup;
+			children = (
+				EE7EB90657F893E735D65E26 /* ClipboardEntry.swift */,
+				7C3978B293FAB87F437B2D89 /* ContentType.swift */,
+			);
+			path = Model;
+			sourceTree = "<group>";
+		};
+		6EE469904D026E07B5E638C7 /* Model */ = {
+			isa = PBXGroup;
+			children = (
+				155A9904AA293878B64E9325 /* ClipboardEntryTests.swift */,
+				590A85722B89EC1934850786 /* ContentTypeTests.swift */,
+			);
+			path = Model;
+			sourceTree = "<group>";
+		};
 		C4C0CBBA2BDF41FDCA7DE4C5 /* Stash */ = {
 			isa = PBXGroup;
 			children = (
@@ -60,6 +86,7 @@
 				FB0FE92F4B2DA1E7CC7DF3AD /* Info.plist */,
 				320F7C11A1446E642285C4D4 /* Stash.entitlements */,
 				18DBCC4E2EF53EB5BDC7A134 /* StashApp.swift */,
+				609DEB17A5D3D8C832F2269E /* Model */,
 				D7A00AFBA6C712255B27AAB1 /* Views */,
 			);
 			path = Stash;
@@ -77,6 +104,7 @@
 			isa = PBXGroup;
 			children = (
 				78C2153EC4FE0F1C715F13D6 /* StashTests.swift */,
+				6EE469904D026E07B5E638C7 /* Model */,
 			);
 			path = StashTests;
 			sourceTree = "<group>";
@@ -165,6 +193,8 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				5B2A7058923FF34722A057F2 /* ClipboardEntry.swift in Sources */,
+				426CE6054B62B75E52494B93 /* ContentType.swift in Sources */,
 				B40ABE2D442B6197F78A09D6 /* MenuBarView.swift in Sources */,
 				B790160B7DAAC2FA787342DD /* StashApp.swift in Sources */,
 			);
@@ -174,6 +204,8 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				D936FEC241FC04E795647794 /* ClipboardEntryTests.swift in Sources */,
+				7586E6278DC288374F8287D8 /* ContentTypeTests.swift in Sources */,
 				B62976F5DA550779DE8DF681 /* StashTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
