@@ -8,6 +8,7 @@ struct MenuBarView: View {
     let preferences: Preferences
     let onPaste: (ClipboardEntry) -> Void
     let onOpenPanel: () -> Void
+    let onPauseChanged: (Bool) -> Void
 
     var body: some View {
         let entries = (try? storage.fetchAll()) ?? []
@@ -33,7 +34,7 @@ struct MenuBarView: View {
 
         Toggle("Pause Monitoring", isOn: Binding(
             get: { preferences.isPaused },
-            set: { preferences.isPaused = $0 }
+            set: { onPauseChanged($0) }
         ))
 
         Divider()

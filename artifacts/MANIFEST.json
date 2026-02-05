@@ -22,5 +22,11 @@
     "original_path": "/Users/hex/.claude-sessions/Stash/Stash/Stash/Assets.xcassets/AccentColor.colorset/Contents.json",
     "timestamp": "2026-02-05T19:58:54Z",
     "contains_secrets": 0
+  },
+  {
+    "filename": "run_stash.sh",
+    "original_path": "/tmp/run_stash.sh",
+    "timestamp": "2026-02-05T20:34:28Z",
+    "contains_secrets": 0
   }
 ]

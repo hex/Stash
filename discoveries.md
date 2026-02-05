@@ -37,12 +37,19 @@
 - Extract pure logic as `nonisolated static func` on @MainActor classes for easy testability
 - NSPasteboard is not Sendable; use named pasteboards for test isolation + `releaseGlobally()` in tearDown
 
-## @MainActor + NSEvent/Timer Callbacks (Runtime Bug)
+## @MainActor + System Callback Closures (Runtime Bug)
 - `NSEvent.addGlobalMonitorForEvents` callbacks fire on a background thread, NOT the main thread
+- `Timer.scheduledTimer(withTimeInterval:repeats:block:)` block is `@Sendable`, cannot directly call `@MainActor` methods
 - If the callback captures a `@MainActor`-isolated `self`, calling methods on it silently fails at runtime
-- Fix: use `DispatchQueue.main.async` inside the callback to dispatch back to main actor
-- Same pattern needed for any closure-based callback that bridges from system APIs to @MainActor code
+- Fix: use `DispatchQueue.main.async` inside ALL system callbacks that need to reach @MainActor code
+- Same pattern needed for NSEvent monitors, Timer callbacks, and any closure-based system API
 - Static constants on @MainActor classes must be marked `nonisolated static` to be accessible from non-isolated callbacks
+
+## One-Way Data Binding Between UI and Services
+- Setting `monitor.isPaused = preferences.isPaused` in init is a one-time copy, not a live binding
+- If a SwiftUI Toggle writes to `preferences.isPaused`, the `monitor.isPaused` stays stale
+- Fix: use a callback pattern (`onPauseChanged`) that updates BOTH preferences and the service
+- UserDefaults persists state across launches, so stale flags survive app restarts
 
 ## NSEvent Global Monitor + Accessibility
 - `NSEvent.addGlobalMonitorForEvents` requires Accessibility permission to function

@@ -21,7 +21,9 @@ final class ClipboardMonitor {
 
     func start() {
         timer = Timer.scheduledTimer(withTimeInterval: 0.5, repeats: true) { [weak self] _ in
-            self?.checkForChanges()
+            DispatchQueue.main.async {
+                self?.checkForChanges()
+            }
         }
     }
 
