@@ -27,4 +27,18 @@
 - `@Attribute(.externalStorage)` auto-offloads blobs >128KB to external files
 - External storage fields cannot be used in SwiftData predicates
 - Store `contentTypeRaw` as String rather than enum for reliable predicate support
+- `ModelConfiguration(isStoredInMemoryOnly: true)` gives fast, isolated test containers (~100ms for 65 tests)
+
+## Swift 6 Strict Concurrency + XCTest (Key Finding)
+- XCTest `setUp()`/`tearDown()` are NOT @MainActor-isolated even when the test class is marked @MainActor
+- This causes "sending X risks causing data races" errors when creating @MainActor objects in setUp
+- Workaround: `@preconcurrency import AppKit` in test files to treat non-Sendable AppKit types as Sendable
+- Alternative: `nonisolated(unsafe)` on test properties holding non-Sendable types
+- Extract pure logic as `nonisolated static func` on @MainActor classes for easy testability
+- NSPasteboard is not Sendable; use named pasteboards for test isolation + `releaseGlobally()` in tearDown
+
+## XcodeGen Behavior
+- `xcodegen generate` must be re-run after adding/removing any Swift files
+- Entitlements: XcodeGen may normalize/strip entries (empty `<dict/>` is correct for non-sandboxed)
+- The .xcodeproj should be regenerated, not manually edited
 
