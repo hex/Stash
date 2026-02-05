@@ -5,6 +5,7 @@ import XCTest
 import SwiftData
 @testable import Stash
 
+@MainActor
 final class StorageManagerTests: XCTestCase {
 
     private var storage: StorageManager!

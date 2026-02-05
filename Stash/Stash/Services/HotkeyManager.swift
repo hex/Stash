@@ -3,6 +3,7 @@
 
 import AppKit
 
+@MainActor
 final class HotkeyManager {
     var onHotkey: (() -> Void)?
 
