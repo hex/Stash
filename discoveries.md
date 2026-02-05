@@ -37,6 +37,25 @@
 - Extract pure logic as `nonisolated static func` on @MainActor classes for easy testability
 - NSPasteboard is not Sendable; use named pasteboards for test isolation + `releaseGlobally()` in tearDown
 
+## @MainActor + NSEvent/Timer Callbacks (Runtime Bug)
+- `NSEvent.addGlobalMonitorForEvents` callbacks fire on a background thread, NOT the main thread
+- If the callback captures a `@MainActor`-isolated `self`, calling methods on it silently fails at runtime
+- Fix: use `DispatchQueue.main.async` inside the callback to dispatch back to main actor
+- Same pattern needed for any closure-based callback that bridges from system APIs to @MainActor code
+- Static constants on @MainActor classes must be marked `nonisolated static` to be accessible from non-isolated callbacks
+
+## NSEvent Global Monitor + Accessibility
+- `NSEvent.addGlobalMonitorForEvents` requires Accessibility permission to function
+- Without permission, the monitor is created but silently receives zero events (no error thrown)
+- Use `AXIsProcessTrustedWithOptions` with prompt option to request access on launch
+- Avoid `kAXTrustedCheckOptionPrompt` directly (not concurrency-safe); use string literal `"AXTrustedCheckOptionPrompt" as CFString`
+- User must restart the app after granting Accessibility access
+
+## SwiftUI MenuBarExtra (.menu style)
+- `@State` properties in menu views are NOT re-evaluated on each menu open - they stay stale
+- Compute derived data directly in `body` or use `onAppear` (though onAppear is unreliable for menus)
+- Computing `let entries = (try? storage.fetchAll()) ?? []` in body works because SwiftUI re-evaluates body on each menu display
+
 ## XcodeGen Behavior
 - `xcodegen generate` must be re-run after adding/removing any Swift files
 - Entitlements: XcodeGen may normalize/strip entries (empty `<dict/>` is correct for non-sandboxed)

@@ -48,3 +48,9 @@
 - [2026-02-05 22:10:41] Write: /Users/hex/.claude-sessions/Stash/Stash/Stash/StashApp.swift
 - [2026-02-05 22:11:37] Write: /Users/hex/.claude-sessions/Stash/Stash/Stash/Views/SearchView.swift
 - [2026-02-05 22:12:56] Write: /Users/hex/.claude/projects/-Users-hex--claude-sessions-Stash/memory/MEMORY.md
+- [2026-02-05 22:16:29] Write: /Users/hex/.claude-sessions/Stash/.claude/commands/run.md
+- [2026-02-05 22:18:40] Edit: /Users/hex/.claude-sessions/Stash/Stash/Stash/Views/MenuBarView.swift
+- [2026-02-05 22:18:48] Write: /Users/hex/.claude-sessions/Stash/Stash/Stash/Services/HotkeyManager.swift
+- [2026-02-05 22:19:01] Write: /Users/hex/.claude-sessions/Stash/Stash/Stash/Services/HotkeyManager.swift
+- [2026-02-05 22:19:34] Edit: /Users/hex/.claude-sessions/Stash/Stash/Stash/StashApp.swift
+- [2026-02-05 22:19:46] Edit: /Users/hex/.claude-sessions/Stash/Stash/Stash/StashApp.swift
