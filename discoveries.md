@@ -63,6 +63,13 @@
 - Compute derived data directly in `body` or use `onAppear` (though onAppear is unreliable for menus)
 - Computing `let entries = (try? storage.fetchAll()) ?? []` in body works because SwiftUI re-evaluates body on each menu display
 
+## macOS Unified Logging Privacy Redaction
+- `NSLog()` and `os_log` messages containing `%@` format specifiers are redacted as `<private>` in `log stream` output
+- This happens unless the process is attached to a debugger (Xcode)
+- `print()` goes to stdout only, not the unified logging system at all — invisible to `log stream`
+- Workaround for CLI debugging: write to a temp file (e.g. `/tmp/app-debug.log`) instead
+- Alternative: use `os_log` with `%{public}s` format specifiers for non-sensitive debug data
+
 ## XcodeGen Behavior
 - `xcodegen generate` must be re-run after adding/removing any Swift files
 - Entitlements: XcodeGen may normalize/strip entries (empty `<dict/>` is correct for non-sandboxed)

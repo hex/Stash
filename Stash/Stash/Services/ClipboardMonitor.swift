@@ -4,6 +4,18 @@
 import AppKit
 import Foundation
 
+func debugLog(_ msg: String) {
+    let line = "\(Date()): \(msg)\n"
+    let path = "/tmp/stash-debug.log"
+    if let handle = FileHandle(forWritingAtPath: path) {
+        handle.seekToEndOfFile()
+        handle.write(line.data(using: .utf8)!)
+        handle.closeFile()
+    } else {
+        FileManager.default.createFile(atPath: path, contents: line.data(using: .utf8))
+    }
+}
+
 @MainActor
 final class ClipboardMonitor {
     typealias ChangeHandler = (ContentType, String?, String?, [String]?, Data?, Data?, String?, String?) -> Void
@@ -65,12 +77,20 @@ final class ClipboardMonitor {
         let currentCount = pasteboard.changeCount
 
         guard currentCount != lastChangeCount else { return }
+        debugLog("changeCount \(lastChangeCount) -> \(currentCount)")
         lastChangeCount = currentCount
 
-        guard !isPaused else { return }
+        guard !isPaused else {
+            debugLog("skipped: paused")
+            return
+        }
 
-        guard let items = pasteboard.pasteboardItems, let item = items.first else { return }
+        guard let items = pasteboard.pasteboardItems, let item = items.first else {
+            debugLog("skipped: no pasteboard items")
+            return
+        }
         let types = item.types
+        debugLog("types: \(types.map(\.rawValue))")
 
         let frontmostBundleID = NSWorkspace.shared.frontmostApplication?.bundleIdentifier
 
@@ -78,9 +98,15 @@ final class ClipboardMonitor {
             types: types,
             excludedBundleIDs: excludedBundleIDs,
             frontmostBundleID: frontmostBundleID
-        ) else { return }
+        ) else {
+            debugLog("skipped: shouldSkip filter (app=\(frontmostBundleID ?? "nil"))")
+            return
+        }
 
-        guard let contentType = ContentType.detect(from: types) else { return }
+        guard let contentType = ContentType.detect(from: types) else {
+            debugLog("skipped: unknown content type")
+            return
+        }
 
         let plainText = item.string(forType: .string)
         let urlString = item.string(forType: .URL) ?? extractURL(from: plainText)
@@ -91,6 +117,7 @@ final class ClipboardMonitor {
         let frontmostApp = NSWorkspace.shared.frontmostApplication
         let appName = frontmostApp?.localizedName
 
+        debugLog("detected: \(contentType), text=\(plainText?.prefix(40) ?? "nil")")
         onClipboardChange?(
             contentType, plainText, urlString, filePaths,
             imageData, richTextData,
