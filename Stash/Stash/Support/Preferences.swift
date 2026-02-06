@@ -25,38 +25,54 @@ final class Preferences {
 
     var historyLimit: Int {
         get {
+            access(keyPath: \.historyLimit)
             let stored = defaults.integer(forKey: Keys.historyLimit)
             if stored == 0 { return Limits.historyDefault }
             return min(max(stored, Limits.historyMin), Limits.historyMax)
         }
         set {
-            defaults.set(min(max(newValue, Limits.historyMin), Limits.historyMax), forKey: Keys.historyLimit)
+            withMutation(keyPath: \.historyLimit) {
+                defaults.set(min(max(newValue, Limits.historyMin), Limits.historyMax), forKey: Keys.historyLimit)
+            }
         }
     }
 
     var pollingInterval: TimeInterval {
         get {
+            access(keyPath: \.pollingInterval)
             let stored = defaults.double(forKey: Keys.pollingInterval)
             if stored == 0 { return Limits.pollingDefault }
             return min(max(stored, Limits.pollingMin), Limits.pollingMax)
         }
         set {
-            defaults.set(min(max(newValue, Limits.pollingMin), Limits.pollingMax), forKey: Keys.pollingInterval)
+            withMutation(keyPath: \.pollingInterval) {
+                defaults.set(min(max(newValue, Limits.pollingMin), Limits.pollingMax), forKey: Keys.pollingInterval)
+            }
         }
     }
 
     var excludedBundleIDs: Set<String> {
         get {
-            Set(defaults.stringArray(forKey: Keys.excludedBundleIDs) ?? [])
+            access(keyPath: \.excludedBundleIDs)
+            return Set(defaults.stringArray(forKey: Keys.excludedBundleIDs) ?? [])
         }
         set {
-            defaults.set(Array(newValue).sorted(), forKey: Keys.excludedBundleIDs)
+            withMutation(keyPath: \.excludedBundleIDs) {
+                defaults.set(Array(newValue).sorted(), forKey: Keys.excludedBundleIDs)
+            }
         }
     }
 
     var isPaused: Bool {
-        get { defaults.bool(forKey: Keys.isPaused) }
-        set { defaults.set(newValue, forKey: Keys.isPaused) }
+        get {
+            access(keyPath: \.isPaused)
+            return defaults.bool(forKey: Keys.isPaused)
+        }
+        set {
+            withMutation(keyPath: \.isPaused) {
+                defaults.set(newValue, forKey: Keys.isPaused)
+            }
+        }
     }
 
     init(defaults: UserDefaults = .standard) {
