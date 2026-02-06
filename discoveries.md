@@ -112,6 +112,25 @@
 - `print()` goes to stdout only, not `log stream` — use file logging for debug (e.g. `/tmp/stash-debug.log`)
 - Debugging: add startup log to `/tmp/` file to verify setup, then check if clicks produce log entries
 
+## Settings Window Inaccessible (Bug)
+- App is LSUIElement (no Dock icon, no app menu visible)
+- SwiftUI `Settings` scene opens via Cmd+Comma or app menu "Settings..." — both require the app to be active/focused
+- Since there's no Dock presence, the app menu is never visible — settings window is unreachable
+- Fix: add a gear icon to the popover's control bar that calls `NSApp.sendAction(Selector(("showSettingsWindow:")), to: nil, from: nil)`
+- macOS 14+ uses `showSettingsWindow:`, macOS 13 uses `showPreferencesWindow:`
+
+## Excluded Apps Don't Sync at Runtime (Bug)
+- `monitor.excludedBundleIDs = preferences.excludedBundleIDs` in AppController.init is a one-time copy
+- Editing excluded apps in Settings has no effect until app restart
+- Same pattern as the isPaused bug — needs callback pattern to sync both preferences AND monitor
+
+## macOS App Resolution APIs
+- `NSWorkspace.shared.urlForApplication(withBundleIdentifier:)` — bundle ID to .app URL (even non-running)
+- `NSWorkspace.shared.icon(forFile: url.path)` — get app icon from path
+- `FileManager.default.displayName(atPath: url.path)` — get display name (strips .app extension)
+- `NSWorkspace.shared.runningApplications.filter { $0.activationPolicy == .regular }` — running GUI apps
+- `NSOpenPanel` + `UTType.applicationBundle` — browse for .app bundles (`import UniformTypeIdentifiers`)
+
 ## NSPopover Customization
 - Hide the arrow: `pop.setValue(true, forKeyPath: "shouldHideAnchor")` — private but stable since macOS 10.10
 - Popover's vibrancy comes from an `NSVisualEffectView` in `_NSPopoverFrame` — covers both arrow and content

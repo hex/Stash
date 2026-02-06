@@ -76,7 +76,7 @@ struct MenuBarView: View {
                             RoundedRectangle(cornerRadius: 6)
                                 .fill(
                                     isCopied ? Color.green.opacity(0.12) :
-                                    isHovered ? Color.primary.opacity(0.10) :
+                                    isHovered ? Color.accentColor.opacity(0.15) :
                                     Color.clear
                                 )
                         )
