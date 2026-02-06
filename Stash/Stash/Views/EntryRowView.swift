@@ -8,39 +8,41 @@ struct EntryRowView: View {
     let isSelected: Bool
 
     var body: some View {
-        HStack(spacing: 8) {
+        HStack(spacing: 10) {
             Image(systemName: iconName)
                 .foregroundStyle(.secondary)
-                .frame(width: 20)
+                .font(.callout)
+                .frame(width: 20, alignment: .center)
 
-            VStack(alignment: .leading, spacing: 2) {
+            VStack(alignment: .leading, spacing: 3) {
                 Text(previewText)
                     .lineLimit(2)
-                    .font(.body)
+                    .font(.body.weight(.medium))
 
-                HStack(spacing: 4) {
+                HStack(spacing: 0) {
                     if let appName = entry.sourceAppName {
                         Text(appName)
-                            .font(.caption)
                             .foregroundStyle(.secondary)
+                        Text(" \u{00B7} ")
+                            .foregroundStyle(.tertiary)
                     }
                     Text(entry.timestamp, style: .relative)
-                        .font(.caption)
                         .foregroundStyle(.tertiary)
                 }
+                .font(.caption)
             }
 
-            Spacer()
+            Spacer(minLength: 4)
 
             if entry.isPinned {
                 Image(systemName: "pin.fill")
-                    .foregroundStyle(.orange)
-                    .font(.caption)
+                    .foregroundStyle(Color.accentColor)
+                    .font(.caption2)
             }
         }
-        .padding(.horizontal, 8)
-        .padding(.vertical, 6)
-        .background(isSelected ? Color.accentColor.opacity(0.2) : Color.clear)
+        .padding(.horizontal, 10)
+        .padding(.vertical, 7)
+        .background(isSelected ? Color.accentColor.opacity(0.15) : Color.clear)
         .cornerRadius(6)
     }
 

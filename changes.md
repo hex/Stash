@@ -182,3 +182,11 @@
 - [2026-02-06 11:54:03] Edit: /Users/hex/.claude-sessions/Stash/Stash/Stash/StashApp.swift
 - [2026-02-06 11:55:45] Edit: /Users/hex/.claude-sessions/Stash/Stash/Stash/StashApp.swift
 - [2026-02-06 11:56:19] Edit: /Users/hex/.claude-sessions/Stash/Stash/Stash/StashApp.swift
+- [2026-02-06 12:03:27] Edit: /Users/hex/.claude-sessions/Stash/Stash/Stash/StashApp.swift
+- [2026-02-06 12:03:35] Edit: /Users/hex/.claude-sessions/Stash/Stash/Stash/StashApp.swift
+- [2026-02-06 12:03:41] Edit: /Users/hex/.claude-sessions/Stash/Stash/Stash/StashApp.swift
+- [2026-02-06 12:03:46] Edit: /Users/hex/.claude-sessions/Stash/Stash/Stash/StashApp.swift
+- [2026-02-06 12:11:27] Write: /Users/hex/.claude-sessions/Stash/Stash/Stash/Views/EntryRowView.swift
+- [2026-02-06 12:11:43] Write: /Users/hex/.claude-sessions/Stash/Stash/Stash/Views/MenuBarView.swift
+- [2026-02-06 12:11:49] Edit: /Users/hex/.claude-sessions/Stash/Stash/Stash/StashApp.swift
+- [2026-02-06 12:14:09] Edit: /Users/hex/.claude-sessions/Stash/Stash/Stash/Views/EntryRowView.swift

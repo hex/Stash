@@ -112,6 +112,12 @@
 - `print()` goes to stdout only, not `log stream` — use file logging for debug (e.g. `/tmp/stash-debug.log`)
 - Debugging: add startup log to `/tmp/` file to verify setup, then check if clicks produce log entries
 
+## SwiftUI ShapeStyle Shorthand Pitfall
+- `.foregroundStyle(.accentColor)` fails to compile — `ShapeStyle` has no `.accentColor` member
+- Must use `Color.accentColor` explicitly: `.foregroundStyle(Color.accentColor)`
+- System colors like `.red`, `.blue` work as shorthand because they're defined on both `Color` and `ShapeStyle`
+- `.accentColor` is only defined on `Color`, so the shorthand dot syntax doesn't resolve
+
 ## XcodeGen Behavior
 - `xcodegen generate` must be re-run after adding/removing any Swift files
 - Entitlements: XcodeGen may normalize/strip entries (empty `<dict/>` is correct for non-sandboxed)

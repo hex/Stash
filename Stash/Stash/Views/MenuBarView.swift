@@ -20,79 +20,110 @@ struct MenuBarView: View {
 
         VStack(spacing: 0) {
             if entries.isEmpty {
-                Spacer()
-                Text("No clipboard history")
-                    .foregroundStyle(.secondary)
-                Spacer()
+                emptyState
             } else {
-                ScrollView {
-                    LazyVStack(spacing: 2) {
-                        ForEach(Array(entries.prefix(10)), id: \.persistentModelID) { entry in
-                            let isCopied = copiedEntryID == entry.persistentModelID
-                            let isHovered = hoveredEntryID == entry.persistentModelID
-
-                            EntryRowView(entry: entry, isSelected: false)
-                                .opacity(isCopied ? 0 : 1)
-                                .overlay {
-                                    if isCopied {
-                                        HStack(spacing: 6) {
-                                            Image(systemName: "checkmark.circle.fill")
-                                                .foregroundStyle(.green)
-                                            Text("Copied")
-                                                .foregroundStyle(.green)
-                                        }
-                                        .font(.body)
-                                    }
-                                }
-                            .background(
-                                isCopied ? Color.green.opacity(0.1) :
-                                isHovered ? Color.primary.opacity(0.06) :
-                                Color.clear
-                            )
-                            .cornerRadius(6)
-                            .contentShape(Rectangle())
-                            .onTapGesture { copyEntry(entry) }
-                            .onHover { hovering in
-                                hoveredEntryID = hovering ? entry.persistentModelID : nil
-                            }
-                            .help(tooltipText(for: entry))
-                        }
-                    }
-                    .padding(.vertical, 4)
-                }
+                entryList(entries)
             }
 
             Divider()
 
-            HStack {
-                Button("Open Stash...") {
-                    onOpenPanel()
-                }
-
-                Spacer()
-
-                Toggle("Pause", isOn: Binding(
-                    get: { preferences.isPaused },
-                    set: { onPauseChanged($0) }
-                ))
-                .toggleStyle(.switch)
-                .controlSize(.small)
-            }
-            .padding(.horizontal, 12)
-            .padding(.vertical, 8)
-
-            HStack {
-                Spacer()
-                Button("Quit Stash") {
-                    NSApplication.shared.terminate(nil)
-                }
-                .controlSize(.small)
-            }
-            .padding(.horizontal, 12)
-            .padding(.bottom, 8)
+            controlBar
         }
-        .frame(width: 320, height: 360)
+        .frame(width: 340, height: 400)
     }
+
+    // MARK: - Empty State
+
+    private var emptyState: some View {
+        VStack(spacing: 8) {
+            Spacer()
+            Image(systemName: "clipboard")
+                .font(.system(size: 32))
+                .foregroundStyle(.tertiary)
+            Text("No clipboard history")
+                .font(.body)
+                .foregroundStyle(.secondary)
+            Text("Copy something to get started")
+                .font(.caption)
+                .foregroundStyle(.tertiary)
+            Spacer()
+        }
+    }
+
+    // MARK: - Entry List
+
+    private func entryList(_ entries: [ClipboardEntry]) -> some View {
+        ScrollView {
+            LazyVStack(spacing: 4) {
+                ForEach(Array(entries.prefix(10)), id: \.persistentModelID) { entry in
+                    let isCopied = copiedEntryID == entry.persistentModelID
+                    let isHovered = hoveredEntryID == entry.persistentModelID
+
+                    EntryRowView(entry: entry, isSelected: false)
+                        .opacity(isCopied ? 0 : 1)
+                        .overlay {
+                            if isCopied {
+                                HStack(spacing: 6) {
+                                    Image(systemName: "checkmark.circle.fill")
+                                        .foregroundStyle(.green)
+                                    Text("Copied")
+                                        .font(.body.weight(.medium))
+                                        .foregroundStyle(.green)
+                                }
+                            }
+                        }
+                        .background(
+                            RoundedRectangle(cornerRadius: 6)
+                                .fill(
+                                    isCopied ? Color.green.opacity(0.12) :
+                                    isHovered ? Color.primary.opacity(0.10) :
+                                    Color.clear
+                                )
+                        )
+                        .contentShape(Rectangle())
+                        .onTapGesture { copyEntry(entry) }
+                        .onHover { hovering in
+                            hoveredEntryID = hovering ? entry.persistentModelID : nil
+                        }
+                        .help(tooltipText(for: entry))
+                }
+            }
+            .padding(.horizontal, 6)
+            .padding(.vertical, 6)
+        }
+    }
+
+    // MARK: - Controls
+
+    private var controlBar: some View {
+        HStack(spacing: 12) {
+            Button("Open Stash...") {
+                onOpenPanel()
+            }
+
+            Spacer()
+
+            Toggle("Pause", isOn: Binding(
+                get: { preferences.isPaused },
+                set: { onPauseChanged($0) }
+            ))
+            .toggleStyle(.switch)
+            .controlSize(.small)
+
+            Button {
+                NSApplication.shared.terminate(nil)
+            } label: {
+                Image(systemName: "power")
+                    .foregroundStyle(.secondary)
+            }
+            .buttonStyle(.plain)
+            .help("Quit Stash")
+        }
+        .padding(.horizontal, 12)
+        .padding(.vertical, 10)
+    }
+
+    // MARK: - Actions
 
     private func copyEntry(_ entry: ClipboardEntry) {
         onPaste(entry)
