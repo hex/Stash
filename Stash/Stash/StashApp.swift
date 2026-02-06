@@ -28,6 +28,8 @@ final class AppController {
     private var statusItem: NSStatusItem?
     private var popover: NSPopover?
     private var started = false
+    private var clickTimer: DispatchWorkItem?
+    private var lastClickTime: TimeInterval = 0
 
     init() {
         self.preferences = Preferences()
@@ -105,6 +107,28 @@ final class AppController {
             setPaused(!monitor.isPaused)
             return
         }
+
+        let now = ProcessInfo.processInfo.systemUptime
+        let isDoubleClick = (now - lastClickTime) < NSEvent.doubleClickInterval
+        lastClickTime = now
+
+        if isDoubleClick {
+            clickTimer?.cancel()
+            clickTimer = nil
+            popover?.performClose(nil)
+            togglePanel()
+            return
+        }
+
+        let work = DispatchWorkItem { [weak self] in
+            self?.togglePopover()
+        }
+        clickTimer?.cancel()
+        clickTimer = work
+        DispatchQueue.main.asyncAfter(deadline: .now() + NSEvent.doubleClickInterval, execute: work)
+    }
+
+    private func togglePopover() {
         guard let button = statusItem?.button, let popover else { return }
         if popover.isShown {
             popover.performClose(nil)
