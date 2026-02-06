@@ -159,6 +159,18 @@ xcodebuild test -scheme Stash -destination 'platform=macOS'
 
 Or press Cmd+U in Xcode. Tests use in-memory SwiftData containers and named pasteboards for isolation.
 
+## Versioning
+
+Stash uses calendar versioning: **YYYY.M.PATCH**
+
+- `YYYY` -- release year
+- `M` -- release month (unpadded)
+- `PATCH` -- incremental patch within the month, starting at 0
+
+Examples: `2026.2.0`, `2026.2.1`, `2026.12.0`
+
+The build number (`CFBundleVersion`) uses the format `YYYYMPATCH` for monotonic ordering.
+
 ## License
 
 MIT
