@@ -72,6 +72,8 @@ final class AppController {
         DispatchQueue.main.async { [self] in
             self.setupStatusItem()
             self.startServices()
+            self.deleteExpiredEntries()
+            self.observeTermination()
         }
     }
 
@@ -228,6 +230,26 @@ final class AppController {
         monitor.excludedBundleIDs = preferences.excludedBundleIDs
     }
 
+    private func deleteExpiredEntries() {
+        let days = preferences.retentionDays
+        guard days > 0 else { return }
+        let count = (try? storage.deleteExpired(olderThanDays: days)) ?? 0
+        if count > 0 {
+            print("Stash: deleted \(count) expired entries (older than \(days) days)")
+        }
+    }
+
+    private func observeTermination() {
+        NotificationCenter.default.addObserver(
+            forName: NSApplication.willTerminateNotification,
+            object: nil,
+            queue: .main
+        ) { [weak self] _ in
+            guard let self, self.preferences.clearOnQuit else { return }
+            try? self.storage.deleteAll()
+        }
+    }
+
     func openSettings() {
         popover?.performClose(nil)
 
@@ -241,11 +263,14 @@ final class AppController {
             preferences: preferences,
             onExcludedAppsChanged: { [weak self] in
                 self?.syncExcludedApps()
+            },
+            onClearHistory: { [weak self] in
+                try? self?.storage.deleteAll()
             }
         )
 
         let window = NSWindow(
-            contentRect: NSRect(x: 0, y: 0, width: 480, height: 440),
+            contentRect: NSRect(x: 0, y: 0, width: 480, height: 580),
             styleMask: [.titled, .closable],
             backing: .buffered,
             defer: false

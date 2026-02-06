@@ -18,6 +18,10 @@ final class StorageManager {
         let config = ModelConfiguration(isStoredInMemoryOnly: inMemory)
         self.container = try! ModelContainer(for: schema, configurations: [config])
         self.context = ModelContext(container)
+
+        if !inMemory {
+            excludeStoreFromTimeMachine()
+        }
     }
 
     /// Saves a new clipboard entry, skipping if it's a consecutive duplicate.
@@ -98,7 +102,36 @@ final class StorageManager {
         changeCount += 1
     }
 
+    /// Deletes unpinned entries older than the given number of days.
+    /// Returns the number of entries deleted. 0 days means "forever" (no-op).
+    @discardableResult
+    func deleteExpired(olderThanDays days: Int) throws -> Int {
+        guard days > 0 else { return 0 }
+
+        let cutoff = Date().addingTimeInterval(-Double(days) * 86400)
+        let allEntries = try context.fetch(FetchDescriptor<ClipboardEntry>())
+        var count = 0
+        for entry in allEntries where !entry.isPinned && entry.timestamp < cutoff {
+            context.delete(entry)
+            count += 1
+        }
+        if count > 0 {
+            try context.save()
+            changeCount += 1
+        }
+        return count
+    }
+
     // MARK: - Private
+
+    private func excludeStoreFromTimeMachine() {
+        guard let storeURL = container.configurations.first?.url else { return }
+        let dir = storeURL.deletingLastPathComponent()
+        var resourceValues = URLResourceValues()
+        resourceValues.isExcludedFromBackup = true
+        var mutableDir = dir
+        try? mutableDir.setResourceValues(resourceValues)
+    }
 
     private func fetchMostRecent() throws -> ClipboardEntry? {
         var descriptor = FetchDescriptor<ClipboardEntry>(

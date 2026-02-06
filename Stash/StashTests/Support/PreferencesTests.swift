@@ -99,4 +99,35 @@ final class PreferencesTests: XCTestCase {
         let prefs2 = Preferences(defaults: defaults)
         XCTAssertEqual(prefs2.excludedBundleIDs, ["com.a", "com.b"])
     }
+
+    // MARK: - Retention period
+
+    func testDefaultRetentionDays() {
+        XCTAssertEqual(prefs.retentionDays, 0, "Default should be 0 (forever)")
+    }
+
+    func testRetentionDaysPersists() {
+        prefs.retentionDays = 7
+        let prefs2 = Preferences(defaults: defaults)
+        XCTAssertEqual(prefs2.retentionDays, 7)
+    }
+
+    func testRetentionDaysAcceptsKnownValues() {
+        for value in [0, 1, 7, 30] {
+            prefs.retentionDays = value
+            XCTAssertEqual(prefs.retentionDays, value)
+        }
+    }
+
+    // MARK: - Clear on quit
+
+    func testDefaultClearOnQuit() {
+        XCTAssertFalse(prefs.clearOnQuit)
+    }
+
+    func testClearOnQuitPersists() {
+        prefs.clearOnQuit = true
+        let prefs2 = Preferences(defaults: defaults)
+        XCTAssertTrue(prefs2.clearOnQuit)
+    }
 }

@@ -12,6 +12,8 @@ final class Preferences {
         static let pollingInterval = "pollingInterval"
         static let excludedBundleIDs = "excludedBundleIDs"
         static let isPaused = "isPaused"
+        static let retentionDays = "retentionDays"
+        static let clearOnQuit = "clearOnQuit"
     }
 
     private enum Limits {
@@ -71,6 +73,31 @@ final class Preferences {
         set {
             withMutation(keyPath: \.isPaused) {
                 defaults.set(newValue, forKey: Keys.isPaused)
+            }
+        }
+    }
+
+    /// Days to retain entries. 0 means forever.
+    var retentionDays: Int {
+        get {
+            access(keyPath: \.retentionDays)
+            return defaults.integer(forKey: Keys.retentionDays)
+        }
+        set {
+            withMutation(keyPath: \.retentionDays) {
+                defaults.set(newValue, forKey: Keys.retentionDays)
+            }
+        }
+    }
+
+    var clearOnQuit: Bool {
+        get {
+            access(keyPath: \.clearOnQuit)
+            return defaults.bool(forKey: Keys.clearOnQuit)
+        }
+        set {
+            withMutation(keyPath: \.clearOnQuit) {
+                defaults.set(newValue, forKey: Keys.clearOnQuit)
             }
         }
     }

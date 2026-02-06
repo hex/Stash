@@ -147,4 +147,54 @@ final class StorageManagerTests: XCTestCase {
         let results = try storage.search("hello")
         XCTAssertEqual(results.count, 1)
     }
+
+    // MARK: - Delete expired
+
+    func testDeleteExpiredRemovesOldEntries() throws {
+        let old = try storage.save(contentType: .plainText, plainText: "Old", sourceAppBundleID: nil, sourceAppName: nil)!
+        old.timestamp = Date().addingTimeInterval(-8 * 86400) // 8 days ago
+        try storage.context.save()
+
+        try storage.save(contentType: .plainText, plainText: "Recent", sourceAppBundleID: nil, sourceAppName: nil)
+
+        let deleted = try storage.deleteExpired(olderThanDays: 7)
+        XCTAssertEqual(deleted, 1)
+
+        let entries = try storage.fetchAll()
+        XCTAssertEqual(entries.count, 1)
+        XCTAssertEqual(entries[0].plainText, "Recent")
+    }
+
+    func testDeleteExpiredKeepsPinnedEntries() throws {
+        let old = try storage.save(contentType: .plainText, plainText: "Pinned old", sourceAppBundleID: nil, sourceAppName: nil)!
+        old.timestamp = Date().addingTimeInterval(-8 * 86400)
+        old.isPinned = true
+        try storage.context.save()
+
+        let deleted = try storage.deleteExpired(olderThanDays: 7)
+        XCTAssertEqual(deleted, 0)
+
+        let entries = try storage.fetchAll()
+        XCTAssertEqual(entries.count, 1)
+    }
+
+    func testDeleteExpiredKeepsRecentEntries() throws {
+        try storage.save(contentType: .plainText, plainText: "Today", sourceAppBundleID: nil, sourceAppName: nil)
+        try storage.save(contentType: .plainText, plainText: "Also today", sourceAppBundleID: nil, sourceAppName: nil)
+
+        let deleted = try storage.deleteExpired(olderThanDays: 1)
+        XCTAssertEqual(deleted, 0)
+
+        let entries = try storage.fetchAll()
+        XCTAssertEqual(entries.count, 2)
+    }
+
+    func testDeleteExpiredWithZeroDaysDeletesNothing() throws {
+        let old = try storage.save(contentType: .plainText, plainText: "Old", sourceAppBundleID: nil, sourceAppName: nil)!
+        old.timestamp = Date().addingTimeInterval(-365 * 86400) // 1 year ago
+        try storage.context.save()
+
+        let deleted = try storage.deleteExpired(olderThanDays: 0)
+        XCTAssertEqual(deleted, 0, "0 days means 'forever' — nothing should be deleted")
+    }
 }
