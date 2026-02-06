@@ -1,5 +1,5 @@
-// ABOUTME: Menu bar dropdown content showing recent clipboard entries and controls.
-// ABOUTME: Provides quick access to pause, settings, and quit actions.
+// ABOUTME: Menu bar popover content showing recent clipboard entries and controls.
+// ABOUTME: Live-updating SwiftUI view for .window style MenuBarExtra.
 
 import SwiftUI
 
@@ -11,52 +11,60 @@ struct MenuBarView: View {
     let onPauseChanged: (Bool) -> Void
 
     var body: some View {
+        let _ = storage.changeCount
         let entries = (try? storage.fetchAll()) ?? []
 
-        ForEach(Array(entries.prefix(5)), id: \.persistentModelID) { entry in
-            Button(menuLabel(for: entry)) {
-                onPaste(entry)
+        VStack(spacing: 0) {
+            if entries.isEmpty {
+                Spacer()
+                Text("No clipboard history")
+                    .foregroundStyle(.secondary)
+                Spacer()
+            } else {
+                ScrollView {
+                    LazyVStack(spacing: 2) {
+                        ForEach(Array(entries.prefix(10)), id: \.persistentModelID) { entry in
+                            Button {
+                                onPaste(entry)
+                            } label: {
+                                EntryRowView(entry: entry, isSelected: false)
+                            }
+                            .buttonStyle(.plain)
+                        }
+                    }
+                    .padding(.vertical, 4)
+                }
             }
-        }
 
-        if entries.isEmpty {
-            Text("No clipboard history")
-        }
+            Divider()
 
-        Divider()
+            HStack {
+                Button("Open Stash...") {
+                    onOpenPanel()
+                }
 
-        Button("Open Stash...") {
-            onOpenPanel()
-        }
-        .keyboardShortcut("o")
+                Spacer()
 
-        Divider()
-
-        Toggle("Pause Monitoring", isOn: Binding(
-            get: { preferences.isPaused },
-            set: { onPauseChanged($0) }
-        ))
-
-        Divider()
-
-        Button("Quit Stash") {
-            NSApplication.shared.terminate(nil)
-        }
-        .keyboardShortcut("q")
-    }
-
-    private func menuLabel(for entry: ClipboardEntry) -> String {
-        switch entry.contentType {
-        case .image:
-            return "[Image]"
-        case .fileURL:
-            if let paths = entry.filePaths {
-                return paths.map { ($0 as NSString).lastPathComponent }.joined(separator: ", ")
+                Toggle("Pause", isOn: Binding(
+                    get: { preferences.isPaused },
+                    set: { onPauseChanged($0) }
+                ))
+                .toggleStyle(.switch)
+                .controlSize(.small)
             }
-            return entry.plainText ?? "[File]"
-        default:
-            let text = entry.plainText ?? ""
-            return String(text.prefix(60))
+            .padding(.horizontal, 12)
+            .padding(.vertical, 8)
+
+            HStack {
+                Spacer()
+                Button("Quit Stash") {
+                    NSApplication.shared.terminate(nil)
+                }
+                .controlSize(.small)
+            }
+            .padding(.horizontal, 12)
+            .padding(.bottom, 8)
         }
+        .frame(width: 320, height: 360)
     }
 }

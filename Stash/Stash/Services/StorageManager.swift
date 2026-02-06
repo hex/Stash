@@ -9,6 +9,8 @@ final class StorageManager {
     let container: ModelContainer
     let context: ModelContext
     var historyLimit: Int = 500
+    /// Incremented on every mutation so SwiftUI views re-evaluate when data changes.
+    private(set) var changeCount: Int = 0
 
     init(inMemory: Bool = false) {
         let schema = Schema([ClipboardEntry.self])
@@ -55,6 +57,7 @@ final class StorageManager {
         context.insert(entry)
         try context.save()
         try enforceHistoryLimit()
+        changeCount += 1
         return entry
     }
 
@@ -82,6 +85,7 @@ final class StorageManager {
     func delete(_ entry: ClipboardEntry) throws {
         context.delete(entry)
         try context.save()
+        changeCount += 1
     }
 
     func deleteAll() throws {
@@ -90,6 +94,7 @@ final class StorageManager {
             context.delete(entry)
         }
         try context.save()
+        changeCount += 1
     }
 
     // MARK: - Private

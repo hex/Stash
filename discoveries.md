@@ -63,6 +63,14 @@
 - Compute derived data directly in `body` or use `onAppear` (though onAppear is unreliable for menus)
 - Computing `let entries = (try? storage.fetchAll()) ?? []` in body works because SwiftUI re-evaluates body on each menu display
 
+## MenuBarExtra .menu Style Does NOT Re-evaluate Body (Critical)
+- `.menu` style `MenuBarExtra` converts its SwiftUI body to `NSMenu` items ONCE at startup
+- Subsequent opens of the menu reuse the cached NSMenu — the body is NOT re-evaluated
+- `@Observable` property changes do NOT trigger re-rendering of `.menu` style content
+- This means `fetchAll()` in the body only runs once, showing stale data forever
+- Fix: switch to `.window` style, which hosts a live SwiftUI view that participates in normal observation/rendering
+- `.window` style combined with an observable `changeCount` property on the data store gives real-time updates
+
 ## macOS Unified Logging Privacy Redaction
 - `NSLog()` and `os_log` messages containing `%@` format specifiers are redacted as `<private>` in `log stream` output
 - This happens unless the process is attached to a debugger (Xcode)
