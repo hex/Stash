@@ -4,11 +4,18 @@
 import AppKit
 import SwiftUI
 
+@Observable
+@MainActor
+final class OpenCount {
+    var value = 0
+}
+
 @MainActor
 final class PanelController {
     private var panel: FloatingPanel?
     private let storage: StorageManager
     private let onSelect: (ClipboardEntry) -> Void
+    private let openCount = OpenCount()
 
     var isVisible: Bool { panel?.isVisible ?? false }
 
@@ -30,6 +37,7 @@ final class PanelController {
             createPanel()
         }
         positionPanel()
+        openCount.value += 1
         NSApp.activate(ignoringOtherApps: true)
         panel?.makeKeyAndOrderFront(nil)
     }
@@ -49,7 +57,7 @@ final class PanelController {
             defer: true
         )
 
-        let searchView = SearchView(storage: storage) { [weak self] entry in
+        let searchView = SearchView(storage: storage, openCount: openCount) { [weak self] entry in
             self?.onSelect(entry)
             self?.hide()
         }

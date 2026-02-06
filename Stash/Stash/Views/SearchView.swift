@@ -6,12 +6,14 @@ import SwiftData
 
 struct SearchView: View {
     let storage: StorageManager
+    let openCount: OpenCount
     let onSelect: (ClipboardEntry) -> Void
 
     @State private var searchText = ""
     @State private var selectedIndex = 0
     @State private var entries: [ClipboardEntry] = []
     @State private var filterType: ContentType?
+    @FocusState private var isSearchFocused: Bool
 
     var body: some View {
         VStack(spacing: 0) {
@@ -29,12 +31,13 @@ struct SearchView: View {
             }
         }
         .frame(width: 640, height: 420)
-        .background(.ultraThinMaterial)
+        .background(.regularMaterial)
         .clipShape(RoundedRectangle(cornerRadius: 12))
         .onAppear {
-            searchText = ""
-            selectedIndex = 0
-            refreshEntries()
+            resetState()
+        }
+        .onChange(of: openCount.value) { _, _ in
+            resetState()
         }
     }
 
@@ -45,6 +48,7 @@ struct SearchView: View {
             TextField("Search clipboard history...", text: $searchText)
                 .textFieldStyle(.plain)
                 .font(.title3)
+                .focused($isSearchFocused)
                 .onChange(of: searchText) { _, _ in
                     selectedIndex = 0
                     refreshEntries()
@@ -134,6 +138,13 @@ struct SearchView: View {
                 proxy.scrollTo(newIndex, anchor: .center)
             }
         }
+    }
+
+    private func resetState() {
+        searchText = ""
+        selectedIndex = 0
+        refreshEntries()
+        isSearchFocused = true
     }
 
     private func refreshEntries() {
