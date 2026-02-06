@@ -15,9 +15,7 @@ struct EntryRowView: View {
                 .frame(width: 20, alignment: .center)
 
             VStack(alignment: .leading, spacing: 3) {
-                Text(previewText)
-                    .lineLimit(2)
-                    .font(.body.weight(.medium))
+                contentPreview
 
                 HStack(spacing: 0) {
                     if let appName = entry.sourceAppName {
@@ -26,13 +24,24 @@ struct EntryRowView: View {
                         Text(" \u{00B7} ")
                             .foregroundStyle(.tertiary)
                     }
-                    Text(entry.timestamp, style: .relative)
+                    Text(friendlyTimestamp)
                         .foregroundStyle(.tertiary)
                 }
                 .font(.caption)
             }
 
             Spacer(minLength: 4)
+
+            if entry.contentType == .image, entry.imageData != nil {
+                Button {
+                    previewImage()
+                } label: {
+                    Image(systemName: "eye")
+                        .foregroundStyle(.secondary)
+                }
+                .buttonStyle(.plain)
+                .help("Preview image")
+            }
 
             if entry.isPinned {
                 Image(systemName: "pin.fill")
@@ -46,6 +55,21 @@ struct EntryRowView: View {
         .cornerRadius(6)
     }
 
+    @ViewBuilder
+    private var contentPreview: some View {
+        if entry.contentType == .image, let data = entry.imageData, let nsImage = NSImage(data: data) {
+            Image(nsImage: nsImage)
+                .resizable()
+                .aspectRatio(contentMode: .fit)
+                .frame(maxHeight: 48)
+                .cornerRadius(4)
+        } else {
+            Text(previewText)
+                .lineLimit(2)
+                .font(.body.weight(.medium))
+        }
+    }
+
     private var iconName: String {
         switch entry.contentType {
         case .plainText: "doc.text"
@@ -54,6 +78,38 @@ struct EntryRowView: View {
         case .fileURL: "doc"
         case .url: "link"
         }
+    }
+
+    private func previewImage() {
+        guard let data = entry.imageData else { return }
+        let url = FileManager.default.temporaryDirectory.appendingPathComponent("stash-preview.png")
+        try? data.write(to: url)
+        NSWorkspace.shared.open(url)
+    }
+
+    private var friendlyTimestamp: String {
+        let now = Date()
+        let seconds = now.timeIntervalSince(entry.timestamp)
+
+        if seconds < 60 { return "Just now" }
+        if seconds < 3600 {
+            let mins = Int(seconds / 60)
+            return "\(mins)m ago"
+        }
+        if seconds < 86400 {
+            let hours = Int(seconds / 3600)
+            return "\(hours)h ago"
+        }
+        if seconds < 172800 { return "Yesterday" }
+        if seconds < 604800 {
+            let days = Int(seconds / 86400)
+            return "\(days)d ago"
+        }
+
+        let formatter = DateFormatter()
+        formatter.dateStyle = .medium
+        formatter.timeStyle = .none
+        return formatter.string(from: entry.timestamp)
     }
 
     private var previewText: String {

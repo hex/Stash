@@ -172,6 +172,15 @@
 - `URL.setResourceValues` mutates, so needs `var` binding (not `let`)
 - Only apply to on-disk stores — skip for `isStoredInMemoryOnly: true` test containers
 
+## NSPopover Dismissal in LSUIElement Apps
+- `NSPopover.behavior = .transient` does NOT work for LSUIElement apps — clicks outside never dismiss the popover
+- Root cause: `.transient` relies on `NSWindow` resignation events, but LSUIElement apps don't participate in the normal activation/deactivation cycle
+- `NSApp.activate(ignoringOtherApps: true)` before showing does NOT fix it
+- Fix: use `.applicationDefined` behavior + manual NSEvent monitors (global + local) for mouse-down events
+- Global monitor catches clicks in other apps; local monitor catches clicks in own windows (e.g. status item)
+- Must call `popover.contentViewController?.view.window?.makeKey()` so keyboard events reach the popover
+- Clean up monitors with `NSEvent.removeMonitor()` on close to avoid leaks
+
 ## XcodeGen Behavior
 - `xcodegen generate` must be re-run after adding/removing any Swift files
 - Entitlements: XcodeGen may normalize/strip entries (empty `<dict/>` is correct for non-sandboxed)

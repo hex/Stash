@@ -98,6 +98,22 @@ final class StorageManager {
         return entries
     }
 
+    func delete(entryWithID id: PersistentIdentifier) throws {
+        let all = try context.fetch(FetchDescriptor<ClipboardEntry>())
+        guard let entry = all.first(where: { $0.persistentModelID == id }) else { return }
+        context.delete(entry)
+        try context.save()
+        changeCount += 1
+    }
+
+    func togglePin(entryWithID id: PersistentIdentifier) throws {
+        let all = try context.fetch(FetchDescriptor<ClipboardEntry>())
+        guard let entry = all.first(where: { $0.persistentModelID == id }) else { return }
+        entry.isPinned.toggle()
+        try context.save()
+        changeCount += 1
+    }
+
     func deleteAll() throws {
         let entries = try context.fetch(FetchDescriptor<ClipboardEntry>())
         for entry in entries {
