@@ -112,6 +112,16 @@
 - `print()` goes to stdout only, not `log stream` — use file logging for debug (e.g. `/tmp/stash-debug.log`)
 - Debugging: add startup log to `/tmp/` file to verify setup, then check if clicks produce log entries
 
+## SwiftData Encryption Options
+- SwiftData/Core Data have NO built-in local encryption (`@Attribute(.allowsCloudEncryption)` is iCloud-only)
+- SQLCipher is incompatible with SwiftData — no hook to swap the underlying SQLite store in `ModelConfiguration`
+- All Apple Silicon Macs encrypt internal storage at hardware level; FileVault ties decryption to login password
+- CryptoKit field-level encryption works for non-searched fields (imageData, richTextData) but breaks `#Predicate` search on plainText
+- Store CryptoKit symmetric key in Keychain (Secure Enclave backed); Keychain itself is NOT for bulk data
+- `NSFileProtection` exists on macOS Apple Silicon but fragile with SQLite (WAL files, self-healing recreates files)
+- Competitors: Maccy/Alfred/CopyClip don't encrypt; Raycast claims "local encrypted database"; Paste uses iCloud encryption
+- Most practical approach: privacy markers (already done) + app exclusions (done) + optional auto-expiry + CryptoKit for blob fields
+
 ## SwiftUI Settings Scene Broken for LSUIElement Apps
 - SwiftUI `Settings` scene relies on the app menu's "Settings..." item to trigger `showSettingsWindow:` action
 - LSUIElement apps have NO app menu and NO Dock icon — the Settings scene exists but is completely unreachable

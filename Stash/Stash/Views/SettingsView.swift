@@ -1,4 +1,4 @@
-// ABOUTME: Preferences window for configuring history limit, polling, and excluded apps.
+// ABOUTME: Preferences window for configuring history limit, excluded apps, and about info.
 // ABOUTME: Uses SMAppService for login item management and app picker for exclusions.
 
 import SwiftUI
@@ -12,6 +12,14 @@ struct SettingsView: View {
     @State private var launchAtLogin = SMAppService.mainApp.status == .enabled
     @State private var isPickingApp = false
 
+    private var appVersion: String {
+        Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "?"
+    }
+
+    private var buildNumber: String {
+        Bundle.main.object(forInfoDictionaryKey: "CFBundleVersion") as? String ?? "?"
+    }
+
     var body: some View {
         Form {
             Section("General") {
@@ -20,14 +28,6 @@ struct SettingsView: View {
                     TextField("", value: $preferences.historyLimit, format: .number)
                         .frame(width: 80)
                     Text("entries")
-                        .foregroundStyle(.secondary)
-                }
-
-                HStack {
-                    Text("Polling interval:")
-                    TextField("", value: $preferences.pollingInterval, format: .number.precision(.fractionLength(1)))
-                        .frame(width: 60)
-                    Text("seconds")
                         .foregroundStyle(.secondary)
                 }
 
@@ -66,9 +66,35 @@ struct SettingsView: View {
                     Button("Browse...") { isPickingApp = true }
                 }
             }
+
+            Section("About") {
+                HStack {
+                    Image(systemName: "clipboard")
+                        .font(.system(size: 28))
+                        .foregroundStyle(.secondary)
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text("Stash")
+                            .font(.headline)
+                        Text("Version \(appVersion) (\(buildNumber))")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
+                }
+
+                Text("Clipboard history manager for macOS")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+
+                Link("hexul.com", destination: URL(string: "https://hexul.com")!)
+                    .font(.caption)
+
+                Text("\u{00A9} hexul")
+                    .font(.caption)
+                    .foregroundStyle(.tertiary)
+            }
         }
         .formStyle(.grouped)
-        .frame(width: 480, height: 400)
+        .frame(width: 480, height: 440)
         .navigationTitle("Stash Settings")
         .fileImporter(
             isPresented: $isPickingApp,

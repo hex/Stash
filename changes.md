@@ -218,3 +218,11 @@
 - [2026-02-06 15:41:20] Edit: /Users/hex/.claude-sessions/Stash/Stash/Stash/StashApp.swift
 - [2026-02-06 15:41:28] Edit: /Users/hex/.claude-sessions/Stash/Stash/Stash/StashApp.swift
 - [2026-02-06 15:41:35] Edit: /Users/hex/.claude-sessions/Stash/Stash/Stash/StashApp.swift
+- [2026-02-06 15:45:21] Write: /Users/hex/.claude-sessions/Stash/Stash/Stash/Views/SettingsView.swift
+- [2026-02-06 15:45:33] Edit: /Users/hex/.claude-sessions/Stash/Stash/Stash/StashApp.swift
+- [2026-02-06 15:47:37] Edit: /Users/hex/.claude-sessions/Stash/Stash/Stash/Views/SettingsView.swift
+- [2026-02-06 15:47:53] Edit: /Users/hex/.claude-sessions/Stash/Stash/Stash/Views/SettingsView.swift
+- [2026-02-06 15:48:21] Edit: /Users/hex/.claude-sessions/Stash/CLAUDE.md
+- [2026-02-06 15:49:04] Edit: /Users/hex/.claude/CLAUDE.md
+- [2026-02-06 15:49:08] Edit: /Users/hex/.claude-sessions/Stash/CLAUDE.md
+- [2026-02-06 15:54:37] Edit: /Users/hex/.claude/CLAUDE.md
