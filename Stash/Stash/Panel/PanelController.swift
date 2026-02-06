@@ -30,6 +30,7 @@ final class PanelController {
             createPanel()
         }
         positionPanel()
+        NSApp.activate(ignoringOtherApps: true)
         panel?.makeKeyAndOrderFront(nil)
     }
 
