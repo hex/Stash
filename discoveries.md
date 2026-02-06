@@ -102,6 +102,12 @@
 - This applies to any `@Observable` class with computed properties backed by external storage (UserDefaults, Keychain, etc.)
 - Symptom: Toggle/Binding visually snaps back because SwiftUI never sees the mutation
 
+## NSStatusItem Right-Click Handling
+- `NSStatusBarButton` only sends its action on left-click (`.leftMouseUp`) by default
+- Call `button.sendAction(on: [.leftMouseUp, .rightMouseUp])` to receive both click types
+- Inside the `@objc` action handler, check `NSApp.currentEvent?.type == .rightMouseUp` to branch
+- No need for a separate `NSMenu` or right-click monitor — single handler serves both
+
 ## XcodeGen Behavior
 - `xcodegen generate` must be re-run after adding/removing any Swift files
 - Entitlements: XcodeGen may normalize/strip entries (empty `<dict/>` is correct for non-sandboxed)
