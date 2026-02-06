@@ -8,9 +8,11 @@ import UniformTypeIdentifiers
 struct SettingsView: View {
     @Bindable var preferences: Preferences
     var onExcludedAppsChanged: (() -> Void)?
+    var onClearHistory: (() -> Void)?
 
     @State private var launchAtLogin = SMAppService.mainApp.status == .enabled
     @State private var isPickingApp = false
+    @State private var isConfirmingClear = false
 
     private var appVersion: String {
         Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "?"
@@ -67,6 +69,30 @@ struct SettingsView: View {
                 }
             }
 
+            Section("Privacy") {
+                Picker("Auto-delete after:", selection: $preferences.retentionDays) {
+                    Text("Never").tag(0)
+                    Text("24 hours").tag(1)
+                    Text("7 days").tag(7)
+                    Text("30 days").tag(30)
+                }
+
+                Toggle("Clear history on quit", isOn: $preferences.clearOnQuit)
+
+                Button("Clear All History...", role: .destructive) {
+                    isConfirmingClear = true
+                }
+                .confirmationDialog(
+                    "Clear all clipboard history?",
+                    isPresented: $isConfirmingClear,
+                    titleVisibility: .visible
+                ) {
+                    Button("Clear All", role: .destructive) {
+                        onClearHistory?()
+                    }
+                }
+            }
+
             Section("About") {
                 HStack {
                     Image(systemName: "clipboard")
@@ -94,7 +120,7 @@ struct SettingsView: View {
             }
         }
         .formStyle(.grouped)
-        .frame(width: 480, height: 440)
+        .frame(width: 480, height: 580)
         .navigationTitle("Stash Settings")
         .fileImporter(
             isPresented: $isPickingApp,

@@ -155,6 +155,13 @@
 - System colors like `.red`, `.blue` work as shorthand because they're defined on both `Color` and `ShapeStyle`
 - `.accentColor` is only defined on `Color`, so the shorthand dot syntax doesn't resolve
 
+## Time Machine Exclusion for SwiftData Stores
+- `URLResourceValues.isExcludedFromBackup = true` excludes files/dirs from Time Machine
+- Must set on the parent directory of the `.store` file to cover WAL and SHM files too
+- `ModelConfiguration` exposes `url` for the store path; use `deletingLastPathComponent()` for the directory
+- `URL.setResourceValues` mutates, so needs `var` binding (not `let`)
+- Only apply to on-disk stores — skip for `isStoredInMemoryOnly: true` test containers
+
 ## XcodeGen Behavior
 - `xcodegen generate` must be re-run after adding/removing any Swift files
 - Entitlements: XcodeGen may normalize/strip entries (empty `<dict/>` is correct for non-sandboxed)
