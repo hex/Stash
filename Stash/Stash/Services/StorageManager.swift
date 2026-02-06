@@ -5,6 +5,7 @@ import Foundation
 import SwiftData
 
 @MainActor
+@Observable
 final class StorageManager {
     let container: ModelContainer
     let context: ModelContext
