@@ -188,7 +188,14 @@ final class AppController {
     }
 
     func togglePanel() {
-        panelController?.toggle()
+        if popover?.isShown == true {
+            popover?.performClose(nil)
+            DispatchQueue.main.async {
+                self.panelController?.toggle()
+            }
+        } else {
+            panelController?.toggle()
+        }
     }
 
     func setPaused(_ isPaused: Bool) {

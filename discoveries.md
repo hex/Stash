@@ -87,6 +87,21 @@
 - Workaround for CLI debugging: write to a temp file (e.g. `/tmp/app-debug.log`) instead
 - Alternative: use `os_log` with `%{public}s` format specifiers for non-sensitive debug data
 
+## NSPopover + FloatingPanel hidesOnDeactivate Race
+- LSUIElement apps have fragile "active" state — closing an NSPopover can deactivate the app
+- If a FloatingPanel has `hidesOnDeactivate = true`, opening it from a popover button fails silently
+- The panel shows momentarily, then the app deactivation hides it immediately
+- Fix: close the popover first, then show the panel on the next run loop tick via `DispatchQueue.main.async`
+- The Cmd+Shift+V hotkey path doesn't hit this because the app isn't "active" to begin with
+
+## @Observable + Computed Properties (Critical)
+- `@Observable` macro ONLY auto-instruments stored properties with observation tracking
+- Computed properties (even on `@Observable` classes) are invisible to the observation system
+- SwiftUI views reading computed properties get NO re-render when values change
+- Fix: manually call `access(keyPath:)` in getters and `withMutation(keyPath:)` in setters
+- This applies to any `@Observable` class with computed properties backed by external storage (UserDefaults, Keychain, etc.)
+- Symptom: Toggle/Binding visually snaps back because SwiftUI never sees the mutation
+
 ## XcodeGen Behavior
 - `xcodegen generate` must be re-run after adding/removing any Swift files
 - Entitlements: XcodeGen may normalize/strip entries (empty `<dict/>` is correct for non-sandboxed)
