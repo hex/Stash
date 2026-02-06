@@ -28,8 +28,6 @@ final class AppController {
     private var statusItem: NSStatusItem?
     private var popover: NSPopover?
     private var started = false
-    private var clickTimer: DispatchWorkItem?
-    private var lastClickTime: TimeInterval = 0
 
     init() {
         self.preferences = Preferences()
@@ -105,32 +103,15 @@ final class AppController {
                 storage: storage,
                 preferences: preferences,
                 onPaste: { [weak self] entry in self?.paste(entry) },
-                onOpenPanel: { [weak self] in self?.togglePanel() },
                 onPauseChanged: { [weak self] isPaused in self?.setPaused(isPaused) }
             )
         )
+        pop.setValue(true, forKeyPath: "shouldHideAnchor")
         self.popover = pop
     }
 
     @objc private func statusItemClicked() {
-        let now = ProcessInfo.processInfo.systemUptime
-        let isDoubleClick = (now - lastClickTime) < NSEvent.doubleClickInterval
-        lastClickTime = now
-
-        if isDoubleClick {
-            clickTimer?.cancel()
-            clickTimer = nil
-            popover?.performClose(nil)
-            togglePanel()
-            return
-        }
-
-        let work = DispatchWorkItem { [weak self] in
-            self?.togglePopover()
-        }
-        clickTimer?.cancel()
-        clickTimer = work
-        DispatchQueue.main.asyncAfter(deadline: .now() + NSEvent.doubleClickInterval, execute: work)
+        togglePopover()
     }
 
     private func togglePopover() {
