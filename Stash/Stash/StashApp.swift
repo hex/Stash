@@ -82,10 +82,10 @@ final class AppController {
         let item = NSStatusBar.system.statusItem(withLength: NSStatusItem.squareLength)
         item.button?.target = self
         item.button?.action = #selector(statusItemClicked)
-        item.button?.sendAction(on: [.leftMouseUp, .rightMouseUp])
         item.button?.wantsLayer = true
         self.statusItem = item
         updateStatusIcon()
+        debugLog("setupStatusItem: button=\(String(describing: item.button)) target=\(String(describing: item.button?.target)) action=\(String(describing: item.button?.action))")
 
         let pop = NSPopover()
         pop.contentSize = NSSize(width: 320, height: 360)
@@ -103,32 +103,7 @@ final class AppController {
     }
 
     @objc private func statusItemClicked() {
-        if NSApp.currentEvent?.type == .rightMouseUp {
-            setPaused(!monitor.isPaused)
-            return
-        }
-
-        let now = ProcessInfo.processInfo.systemUptime
-        let isDoubleClick = (now - lastClickTime) < NSEvent.doubleClickInterval
-        lastClickTime = now
-
-        if isDoubleClick {
-            clickTimer?.cancel()
-            clickTimer = nil
-            popover?.performClose(nil)
-            togglePanel()
-            return
-        }
-
-        let work = DispatchWorkItem { [weak self] in
-            self?.togglePopover()
-        }
-        clickTimer?.cancel()
-        clickTimer = work
-        DispatchQueue.main.asyncAfter(deadline: .now() + NSEvent.doubleClickInterval, execute: work)
-    }
-
-    private func togglePopover() {
+        debugLog("statusItemClicked fired")
         guard let button = statusItem?.button, let popover else { return }
         if popover.isShown {
             popover.performClose(nil)
@@ -232,5 +207,19 @@ final class AppController {
         preferences.isPaused = isPaused
         monitor.isPaused = isPaused
         updateStatusIcon()
+    }
+
+    private nonisolated func debugLog(_ msg: String) {
+        let line = "\(Date()): \(msg)\n"
+        if let data = line.data(using: .utf8) {
+            let url = URL(fileURLWithPath: "/tmp/stash-debug.log")
+            if let handle = try? FileHandle(forWritingTo: url) {
+                handle.seekToEndOfFile()
+                handle.write(data)
+                handle.closeFile()
+            } else {
+                try? data.write(to: url)
+            }
+        }
     }
 }

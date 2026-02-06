@@ -47,7 +47,7 @@ struct SearchView: View {
                 .foregroundStyle(.secondary)
             TextField("Search clipboard history...", text: $searchText)
                 .textFieldStyle(.plain)
-                .font(.title3)
+                .font(.title3.bold())
                 .focused($isSearchFocused)
                 .onChange(of: searchText) { _, _ in
                     selectedIndex = 0
@@ -144,7 +144,9 @@ struct SearchView: View {
         searchText = ""
         selectedIndex = 0
         refreshEntries()
-        isSearchFocused = true
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+            isSearchFocused = true
+        }
     }
 
     private func refreshEntries() {
