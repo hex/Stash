@@ -22,19 +22,17 @@ final class AppController {
     let storage: StorageManager
     let preferences: Preferences
     private let monitor: ClipboardMonitor
-    private let hotkeyManager: HotkeyManager
     private let pasteService: PasteService
-    private var panelController: PanelController?
     private var statusItem: NSStatusItem?
     private var popover: NSPopover?
     private var settingsWindow: NSWindow?
-    private var started = false
+    private var globalClickMonitor: Any?
+    private var localClickMonitor: Any?
 
     init() {
         self.preferences = Preferences()
         self.storage = StorageManager()
         self.monitor = ClipboardMonitor()
-        self.hotkeyManager = HotkeyManager()
         self.pasteService = PasteService(monitor: monitor)
 
         storage.historyLimit = preferences.historyLimit
@@ -60,18 +58,9 @@ final class AppController {
             }
         }
 
-        let controller = PanelController(storage: storage) { [weak self] entry in
-            self?.paste(entry)
-        }
-        self.panelController = controller
-
-        hotkeyManager.onHotkey = { [weak self] in
-            self?.togglePanel()
-        }
-
         DispatchQueue.main.async { [self] in
             self.setupStatusItem()
-            self.startServices()
+            self.monitor.start()
             self.deleteExpiredEntries()
             self.observeTermination()
         }
@@ -100,7 +89,7 @@ final class AppController {
 
         let pop = NSPopover()
         pop.contentSize = NSSize(width: 340, height: 400)
-        pop.behavior = .transient
+        pop.behavior = .applicationDefined
         pop.contentViewController = NSHostingController(
             rootView: MenuBarView(
                 storage: storage,
@@ -123,9 +112,43 @@ final class AppController {
     private func togglePopover() {
         guard let button = statusItem?.button, let popover else { return }
         if popover.isShown {
-            popover.performClose(nil)
+            closePopover()
         } else {
             popover.show(relativeTo: button.bounds, of: button, preferredEdge: .minY)
+            popover.contentViewController?.view.window?.makeKey()
+            addClickMonitors()
+        }
+    }
+
+    private func closePopover() {
+        popover?.performClose(nil)
+        removeClickMonitors()
+    }
+
+    private func addClickMonitors() {
+        globalClickMonitor = NSEvent.addGlobalMonitorForEvents(matching: [.leftMouseDown, .rightMouseDown]) { [weak self] _ in
+            DispatchQueue.main.async { self?.closePopover() }
+        }
+        localClickMonitor = NSEvent.addLocalMonitorForEvents(matching: [.leftMouseDown, .rightMouseDown]) { [weak self] event in
+            guard let self, let popover = self.popover, popover.isShown else { return event }
+            // If the click is inside the popover window, let it through
+            if let popoverWindow = popover.contentViewController?.view.window,
+               event.window == popoverWindow {
+                return event
+            }
+            DispatchQueue.main.async { self.closePopover() }
+            return event
+        }
+    }
+
+    private func removeClickMonitors() {
+        if let monitor = globalClickMonitor {
+            NSEvent.removeMonitor(monitor)
+            globalClickMonitor = nil
+        }
+        if let monitor = localClickMonitor {
+            NSEvent.removeMonitor(monitor)
+            localClickMonitor = nil
         }
     }
 
@@ -186,38 +209,9 @@ final class AppController {
 
     // MARK: - Services
 
-    private func startServices() {
-        guard !started else { return }
-        started = true
-        monitor.start()
-        hotkeyManager.start()
-        requestAccessibilityIfNeeded()
-    }
-
-    private nonisolated func requestAccessibilityIfNeeded() {
-        let key = "AXTrustedCheckOptionPrompt" as CFString
-        let trusted = AXIsProcessTrustedWithOptions(
-            [key: true] as CFDictionary
-        )
-        if !trusted {
-            print("Stash: Accessibility access required for global hotkey (Cmd+Shift+V)")
-        }
-    }
-
     func paste(_ entry: ClipboardEntry) {
         pasteService.paste(entry)
         animateStatusIcon()
-    }
-
-    func togglePanel() {
-        if popover?.isShown == true {
-            popover?.performClose(nil)
-            DispatchQueue.main.async {
-                self.panelController?.toggle()
-            }
-        } else {
-            panelController?.toggle()
-        }
     }
 
     func setPaused(_ isPaused: Bool) {

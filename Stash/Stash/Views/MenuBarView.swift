@@ -86,6 +86,23 @@ struct MenuBarView: View {
                         .onHover { hovering in
                             hoveredEntryID = hovering ? entry.persistentModelID : nil
                         }
+                        .contextMenu {
+                            Button("Copy") { copyEntry(entry) }
+
+                            Button(entry.isPinned ? "Unpin" : "Pin") {
+                                try? storage.togglePin(entryWithID: entry.persistentModelID)
+                            }
+
+                            if entry.contentType == .image, entry.imageData != nil {
+                                Button("Preview") { previewImage(entry) }
+                            }
+
+                            Divider()
+
+                            Button("Delete", role: .destructive) {
+                                try? storage.delete(entryWithID: entry.persistentModelID)
+                            }
+                        }
                         .help(tooltipText(for: entry))
                 }
             }
@@ -143,6 +160,13 @@ struct MenuBarView: View {
                 copiedEntryID = nil
             }
         }
+    }
+
+    private func previewImage(_ entry: ClipboardEntry) {
+        guard let data = entry.imageData else { return }
+        let url = FileManager.default.temporaryDirectory.appendingPathComponent("stash-preview.png")
+        try? data.write(to: url)
+        NSWorkspace.shared.open(url)
     }
 
     private func tooltipText(for entry: ClipboardEntry) -> String {

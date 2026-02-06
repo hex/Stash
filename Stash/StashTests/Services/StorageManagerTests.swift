@@ -174,6 +174,48 @@ final class StorageManagerTests: XCTestCase {
         XCTAssertEqual(deleted, 0, "0 days means 'forever' — nothing should be deleted")
     }
 
+    // MARK: - Delete by ID
+
+    func testDeleteByID() throws {
+        let entry = try storage.save(contentType: .plainText, plainText: "Delete me", sourceAppBundleID: nil, sourceAppName: nil)!
+        let id = entry.persistentModelID
+
+        try storage.delete(entryWithID: id)
+
+        let entries = try storage.fetchAll()
+        XCTAssertEqual(entries.count, 0)
+    }
+
+    func testDeleteByIDIgnoresMissingEntry() throws {
+        try storage.save(contentType: .plainText, plainText: "Keep me", sourceAppBundleID: nil, sourceAppName: nil)
+
+        // Use a fake ID by saving and deleting an entry first
+        let temp = try storage.save(contentType: .plainText, plainText: "Temp", sourceAppBundleID: nil, sourceAppName: nil)!
+        let tempID = temp.persistentModelID
+        try storage.delete(entryWithID: tempID)
+
+        // Deleting the already-deleted ID should not crash
+        try storage.delete(entryWithID: tempID)
+
+        let entries = try storage.fetchAll()
+        XCTAssertEqual(entries.count, 1)
+    }
+
+    // MARK: - Toggle pin by ID
+
+    func testTogglePinByID() throws {
+        let entry = try storage.save(contentType: .plainText, plainText: "Pin me", sourceAppBundleID: nil, sourceAppName: nil)!
+        let id = entry.persistentModelID
+
+        try storage.togglePin(entryWithID: id)
+        var entries = try storage.fetchAll()
+        XCTAssertTrue(entries[0].isPinned)
+
+        try storage.togglePin(entryWithID: id)
+        entries = try storage.fetchAll()
+        XCTAssertFalse(entries[0].isPinned)
+    }
+
     // MARK: - Encryption
 
     func testContentIsEncryptedAtRest() throws {
