@@ -98,7 +98,7 @@ final class AppController {
         }
 
         let pop = NSPopover()
-        pop.contentSize = NSSize(width: 320, height: 360)
+        pop.contentSize = NSSize(width: 340, height: 400)
         pop.behavior = .transient
         pop.contentViewController = NSHostingController(
             rootView: MenuBarView(
