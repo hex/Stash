@@ -8,7 +8,6 @@ struct MenuBarView: View {
     let storage: StorageManager
     let preferences: Preferences
     let onPaste: (ClipboardEntry) -> Void
-    let onOpenPanel: () -> Void
     let onPauseChanged: (Bool) -> Void
 
     @State private var copiedEntryID: PersistentIdentifier?
@@ -30,6 +29,7 @@ struct MenuBarView: View {
             controlBar
         }
         .frame(width: 340, height: 400)
+        .background(Color(.windowBackgroundColor))
     }
 
     // MARK: - Empty State
@@ -91,16 +91,14 @@ struct MenuBarView: View {
             .padding(.horizontal, 6)
             .padding(.vertical, 6)
         }
+        .scrollIndicators(.automatic)
+        .contentMargins(.vertical, 6, for: .scrollIndicators)
     }
 
     // MARK: - Controls
 
     private var controlBar: some View {
         HStack(spacing: 12) {
-            Button("Open Stash...") {
-                onOpenPanel()
-            }
-
             Spacer()
 
             Toggle("Pause", isOn: Binding(

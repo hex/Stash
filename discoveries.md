@@ -112,6 +112,13 @@
 - `print()` goes to stdout only, not `log stream` — use file logging for debug (e.g. `/tmp/stash-debug.log`)
 - Debugging: add startup log to `/tmp/` file to verify setup, then check if clicks produce log entries
 
+## NSPopover Customization
+- Hide the arrow: `pop.setValue(true, forKeyPath: "shouldHideAnchor")` — private but stable since macOS 10.10
+- Popover's vibrancy comes from an `NSVisualEffectView` in `_NSPopoverFrame` — covers both arrow and content
+- Adding a SwiftUI `.background(material)` creates a SECOND layer that won't match the arrow
+- For solid background: use `Color(.windowBackgroundColor)` on the SwiftUI content
+- ScrollView indicators clip against popover's rounded corners; fix with `.contentMargins(.vertical, 6, for: .scrollIndicators)`
+
 ## SwiftUI ShapeStyle Shorthand Pitfall
 - `.foregroundStyle(.accentColor)` fails to compile — `ShapeStyle` has no `.accentColor` member
 - Must use `Color.accentColor` explicitly: `.foregroundStyle(Color.accentColor)`
