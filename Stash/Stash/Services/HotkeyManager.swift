@@ -30,17 +30,6 @@ final class HotkeyManager {
         }
     }
 
-    func stop() {
-        if let global = globalMonitor {
-            NSEvent.removeMonitor(global)
-            globalMonitor = nil
-        }
-        if let local = localMonitor {
-            NSEvent.removeMonitor(local)
-            localMonitor = nil
-        }
-    }
-
     private nonisolated static func isHotkey(_ event: NSEvent) -> Bool {
         event.keyCode == hotkeyCode
             && event.modifierFlags.intersection(.deviceIndependentFlagsMask) == hotkeyModifiers

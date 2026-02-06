@@ -155,6 +155,16 @@
 - System colors like `.red`, `.blue` work as shorthand because they're defined on both `Color` and `ShapeStyle`
 - `.accentColor` is only defined on `Color`, so the shorthand dot syntax doesn't resolve
 
+## SwiftData Field-Level Encryption Pattern
+- SwiftData has NO full-DB encryption option; SQLCipher is incompatible (no hook to swap SQLite engine)
+- Field-level encryption with CryptoKit AES-256-GCM works: encrypt before `context.insert()`, decrypt after `context.fetch()`
+- CRITICAL: Cannot decrypt in-place on the same ModelContext used for writes — `context.save()` would persist decrypted values back
+- Solution: `fetchAll()` uses a fresh `ModelContext(container)` for reads; entries are decrypted in this disposable context
+- The disposable context is retained by the fetched entries (they reference their context); released when entries are replaced
+- Keychain key storage: `kSecAttrAccessibleWhenUnlockedThisDeviceOnly` ties key to device + login session
+- Migration from unencrypted to encrypted: `(try? crypto.decrypt(value)) ?? value` — invalid ciphertext falls back to plaintext
+- Content hash for dedup must be computed from PLAINTEXT before encryption (hash stays unencrypted in DB)
+
 ## Time Machine Exclusion for SwiftData Stores
 - `URLResourceValues.isExcludedFromBackup = true` excludes files/dirs from Time Machine
 - Must set on the parent directory of the `.store` file to cover WAL and SHM files too

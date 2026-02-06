@@ -151,14 +151,15 @@ struct SearchView: View {
 
     private func refreshEntries() {
         do {
-            if searchText.isEmpty {
-                entries = try storage.fetchAll()
-            } else {
-                entries = try storage.search(searchText)
+            var result = try storage.fetchAll()
+            if !searchText.isEmpty {
+                let lowered = searchText.lowercased()
+                result = result.filter { $0.plainText?.localizedCaseInsensitiveContains(lowered) == true }
             }
             if let type = filterType {
-                entries = entries.filter { $0.contentType == type }
+                result = result.filter { $0.contentType == type }
             }
+            entries = result
         } catch {
             entries = []
         }

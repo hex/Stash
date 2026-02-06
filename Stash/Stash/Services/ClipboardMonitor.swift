@@ -27,11 +27,6 @@ final class ClipboardMonitor {
         }
     }
 
-    func stop() {
-        timer?.invalidate()
-        timer = nil
-    }
-
     /// Called by PasteService to prevent self-capture after writing to the pasteboard
     func markOwnChangeCount(_ count: Int) {
         lastChangeCount = count

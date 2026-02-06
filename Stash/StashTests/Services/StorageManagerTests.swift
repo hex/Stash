@@ -1,5 +1,5 @@
-// ABOUTME: Tests for StorageManager CRUD, consecutive dedup, history limit, and pinning.
-// ABOUTME: Uses in-memory ModelContainer for test isolation.
+// ABOUTME: Tests for StorageManager CRUD, consecutive dedup, history limit, pinning, and encryption.
+// ABOUTME: Uses in-memory ModelContainer and per-test Keychain key for isolation.
 
 import XCTest
 import SwiftData
@@ -9,14 +9,18 @@ import SwiftData
 final class StorageManagerTests: XCTestCase {
 
     private var storage: StorageManager!
+    private var crypto: CryptoService!
 
     override func setUp() {
         super.setUp()
-        storage = StorageManager(inMemory: true)
+        crypto = CryptoService(keychainService: "com.hexul.Stash.tests.\(UUID().uuidString)")
+        storage = StorageManager(inMemory: true, crypto: crypto)
     }
 
     override func tearDown() {
+        crypto.deleteKey()
         storage = nil
+        crypto = nil
         super.tearDown()
     }
 
@@ -96,16 +100,6 @@ final class StorageManagerTests: XCTestCase {
         XCTAssertTrue(entries.contains(where: { $0.plainText == "Pinned" }), "Pinned entry should survive pruning")
     }
 
-    // MARK: - Delete
-
-    func testDeleteEntry() throws {
-        let entry = try storage.save(contentType: .plainText, plainText: "Delete me", sourceAppBundleID: nil, sourceAppName: nil)!
-        try storage.delete(entry)
-
-        let entries = try storage.fetchAll()
-        XCTAssertEqual(entries.count, 0)
-    }
-
     // MARK: - Delete all
 
     func testDeleteAll() throws {
@@ -128,24 +122,6 @@ final class StorageManagerTests: XCTestCase {
         let entries = try storage.fetchAll()
         XCTAssertEqual(entries[0].plainText, "Newest")
         XCTAssertEqual(entries[1].plainText, "Oldest")
-    }
-
-    // MARK: - Search
-
-    func testSearchFiltersByText() throws {
-        try storage.save(contentType: .plainText, plainText: "Hello world", sourceAppBundleID: nil, sourceAppName: nil)
-        try storage.save(contentType: .plainText, plainText: "Goodbye world", sourceAppBundleID: nil, sourceAppName: nil)
-        try storage.save(contentType: .plainText, plainText: "Unrelated", sourceAppBundleID: nil, sourceAppName: nil)
-
-        let results = try storage.search("world")
-        XCTAssertEqual(results.count, 2)
-    }
-
-    func testSearchIsCaseInsensitive() throws {
-        try storage.save(contentType: .plainText, plainText: "HELLO", sourceAppBundleID: nil, sourceAppName: nil)
-
-        let results = try storage.search("hello")
-        XCTAssertEqual(results.count, 1)
     }
 
     // MARK: - Delete expired
@@ -196,5 +172,43 @@ final class StorageManagerTests: XCTestCase {
 
         let deleted = try storage.deleteExpired(olderThanDays: 0)
         XCTAssertEqual(deleted, 0, "0 days means 'forever' — nothing should be deleted")
+    }
+
+    // MARK: - Encryption
+
+    func testContentIsEncryptedAtRest() throws {
+        try storage.save(contentType: .plainText, plainText: "Secret text", sourceAppBundleID: nil, sourceAppName: nil)
+
+        // Read raw entry from the write context (encrypted data)
+        let rawEntries = try storage.context.fetch(FetchDescriptor<ClipboardEntry>())
+        XCTAssertEqual(rawEntries.count, 1)
+        XCTAssertNotEqual(rawEntries[0].plainText, "Secret text", "Raw stored value should be encrypted")
+
+        // Read via fetchAll (decrypted data)
+        let entries = try storage.fetchAll()
+        XCTAssertEqual(entries[0].plainText, "Secret text", "fetchAll should return decrypted values")
+    }
+
+    func testImageDataIsEncryptedAtRest() throws {
+        let imageData = Data([0xDE, 0xAD, 0xBE, 0xEF])
+        try storage.save(
+            contentType: .image,
+            imageData: imageData,
+            sourceAppBundleID: nil,
+            sourceAppName: nil
+        )
+
+        let rawEntries = try storage.context.fetch(FetchDescriptor<ClipboardEntry>())
+        XCTAssertNotEqual(rawEntries[0].imageData, imageData, "Raw stored image should be encrypted")
+
+        let entries = try storage.fetchAll()
+        XCTAssertEqual(entries[0].imageData, imageData, "fetchAll should return decrypted image data")
+    }
+
+    func testDedupStillWorksWithEncryption() throws {
+        try storage.save(contentType: .plainText, plainText: "Same", sourceAppBundleID: nil, sourceAppName: nil)
+        let second = try storage.save(contentType: .plainText, plainText: "Same", sourceAppBundleID: nil, sourceAppName: nil)
+
+        XCTAssertNil(second, "Dedup should work even though stored content is encrypted")
     }
 }
