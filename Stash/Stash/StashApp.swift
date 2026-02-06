@@ -55,7 +55,7 @@ final class AppController {
                 )
                 self.animateStatusIcon()
             } catch {
-                debugLog("save FAILED: \(error)")
+                print("Stash: save failed: \(error)")
             }
         }
 
@@ -111,68 +111,31 @@ final class AppController {
         }
     }
 
-    private var isAnimating = false
-
     private func animateStatusIcon() {
-        guard let button = statusItem?.button, !isAnimating,
-              let originalImage = button.image else { return }
-        isAnimating = true
+        guard let button = statusItem?.button else { return }
 
-        let size = originalImage.size
-        guard let outline = NSImage(systemSymbolName: "clipboard", accessibilityDescription: nil)?
-                .withSymbolConfiguration(.init(pointSize: size.height, weight: .regular)),
-              let fill = NSImage(systemSymbolName: "clipboard.fill", accessibilityDescription: nil)?
-                .withSymbolConfiguration(.init(pointSize: size.height, weight: .regular)) else {
-            isAnimating = false
-            return
+        let fillImage = NSImage(
+            systemSymbolName: "clipboard.fill",
+            accessibilityDescription: nil
+        )
+        let outlineImage = NSImage(
+            systemSymbolName: "clipboard",
+            accessibilityDescription: nil
+        )
+
+        let fadeIn = CATransition()
+        fadeIn.type = .fade
+        fadeIn.duration = 0.15
+        button.layer?.add(fadeIn, forKey: "fillIn")
+        button.image = fillImage
+
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) {
+            let fadeOut = CATransition()
+            fadeOut.type = .fade
+            fadeOut.duration = 0.15
+            button.layer?.add(fadeOut, forKey: "fillOut")
+            button.image = outlineImage
         }
-
-        let frameCount = 10
-        let frameDuration = 0.035
-
-        // Fill in: clip rect grows from bottom to top
-        for i in 0...frameCount {
-            let fraction = CGFloat(i) / CGFloat(frameCount)
-            DispatchQueue.main.asyncAfter(deadline: .now() + Double(i) * frameDuration) {
-                button.image = Self.compositeImage(outline: outline, fill: fill, fillFraction: fraction, size: size)
-            }
-        }
-
-        // Hold filled, then drain back down
-        let holdDelay = Double(frameCount) * frameDuration + 0.6
-        for i in 0...frameCount {
-            let fraction = 1.0 - CGFloat(i) / CGFloat(frameCount)
-            DispatchQueue.main.asyncAfter(deadline: .now() + holdDelay + Double(i) * frameDuration) { [weak self] in
-                button.image = Self.compositeImage(outline: outline, fill: fill, fillFraction: fraction, size: size)
-                if i == frameCount {
-                    self?.isAnimating = false
-                }
-            }
-        }
-    }
-
-    private static func compositeImage(
-        outline: NSImage,
-        fill: NSImage,
-        fillFraction: CGFloat,
-        size: NSSize
-    ) -> NSImage {
-        let image = NSImage(size: size, flipped: false) { rect in
-            outline.draw(in: rect)
-
-            if fillFraction > 0 {
-                let clipHeight = rect.height * fillFraction
-                let clipRect = NSRect(x: 0, y: 0, width: rect.width, height: clipHeight)
-                NSGraphicsContext.current?.saveGraphicsState()
-                NSBezierPath(rect: clipRect).addClip()
-                fill.draw(in: rect)
-                NSGraphicsContext.current?.restoreGraphicsState()
-            }
-
-            return true
-        }
-        image.isTemplate = true
-        return image
     }
 
     // MARK: - Services
