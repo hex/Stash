@@ -1,5 +1,5 @@
-// ABOUTME: Manages SwiftData persistence for clipboard entries.
-// ABOUTME: Handles CRUD, consecutive dedup, history limit enforcement, and search.
+// ABOUTME: Manages SwiftData persistence for clipboard entries with field-level encryption.
+// ABOUTME: Handles CRUD, consecutive dedup, history limit enforcement, and encrypted storage.
 
 import Foundation
 import SwiftData
@@ -9,15 +9,17 @@ import SwiftData
 final class StorageManager {
     let container: ModelContainer
     let context: ModelContext
+    let crypto: CryptoService
     var historyLimit: Int = 500
     /// Incremented on every mutation so SwiftUI views re-evaluate when data changes.
     private(set) var changeCount: Int = 0
 
-    init(inMemory: Bool = false) {
+    init(inMemory: Bool = false, crypto: CryptoService = CryptoService()) {
         let schema = Schema([ClipboardEntry.self])
         let config = ModelConfiguration(isStoredInMemoryOnly: inMemory)
         self.container = try! ModelContainer(for: schema, configurations: [config])
         self.context = ModelContext(container)
+        self.crypto = crypto
 
         if !inMemory {
             excludeStoreFromTimeMachine()
@@ -59,6 +61,16 @@ final class StorageManager {
             sourceAppBundleID: sourceAppBundleID,
             sourceAppName: sourceAppName
         )
+
+        // Encrypt content fields before persisting (hash was computed from plaintext above)
+        entry.plainText = plainText.flatMap { try? crypto.encrypt($0) }
+        entry.urlString = urlString.flatMap { try? crypto.encrypt($0) }
+        if let json = entry.filePathsJSON {
+            entry.filePathsJSON = try? crypto.encrypt(json)
+        }
+        entry.imageData = imageData.flatMap { try? crypto.encrypt(data: $0) }
+        entry.richTextData = richTextData.flatMap { try? crypto.encrypt(data: $0) }
+
         context.insert(entry)
         try context.save()
         try enforceHistoryLimit()
@@ -67,30 +79,23 @@ final class StorageManager {
     }
 
     func fetchAll() throws -> [ClipboardEntry] {
+        // Use a separate read context so decrypted values are never saved back
+        let readContext = ModelContext(container)
         var descriptor = FetchDescriptor<ClipboardEntry>(
             sortBy: [SortDescriptor(\.timestamp, order: .reverse)]
         )
         descriptor.fetchLimit = historyLimit
-        return try context.fetch(descriptor)
-    }
+        let entries = try readContext.fetch(descriptor)
 
-    func search(_ query: String) throws -> [ClipboardEntry] {
-        let lowered = query.lowercased()
-        let predicate = #Predicate<ClipboardEntry> { entry in
-            entry.plainText?.localizedStandardContains(lowered) == true
+        for entry in entries {
+            entry.plainText = decryptString(entry.plainText)
+            entry.urlString = decryptString(entry.urlString)
+            entry.filePathsJSON = decryptString(entry.filePathsJSON)
+            entry.imageData = decryptData(entry.imageData)
+            entry.richTextData = decryptData(entry.richTextData)
         }
-        var descriptor = FetchDescriptor<ClipboardEntry>(
-            predicate: predicate,
-            sortBy: [SortDescriptor(\.timestamp, order: .reverse)]
-        )
-        descriptor.fetchLimit = historyLimit
-        return try context.fetch(descriptor)
-    }
 
-    func delete(_ entry: ClipboardEntry) throws {
-        context.delete(entry)
-        try context.save()
-        changeCount += 1
+        return entries
     }
 
     func deleteAll() throws {
@@ -123,6 +128,18 @@ final class StorageManager {
     }
 
     // MARK: - Private
+
+    /// Decrypts a string, falling back to the original value for pre-encryption data.
+    private func decryptString(_ value: String?) -> String? {
+        guard let value else { return nil }
+        return (try? crypto.decrypt(value)) ?? value
+    }
+
+    /// Decrypts data, falling back to the original value for pre-encryption data.
+    private func decryptData(_ value: Data?) -> Data? {
+        guard let value else { return nil }
+        return (try? crypto.decrypt(data: value)) ?? value
+    }
 
     private func excludeStoreFromTimeMachine() {
         guard let storeURL = container.configurations.first?.url else { return }
