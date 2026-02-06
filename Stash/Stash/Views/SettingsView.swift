@@ -1,14 +1,16 @@
 // ABOUTME: Preferences window for configuring history limit, polling, and excluded apps.
-// ABOUTME: Uses SMAppService for login item management on macOS 13+.
+// ABOUTME: Uses SMAppService for login item management and app picker for exclusions.
 
 import SwiftUI
 import ServiceManagement
+import UniformTypeIdentifiers
 
 struct SettingsView: View {
     @Bindable var preferences: Preferences
+    var onExcludedAppsChanged: (() -> Void)?
 
     @State private var launchAtLogin = SMAppService.mainApp.status == .enabled
-    @State private var excludedAppInput = ""
+    @State private var isPickingApp = false
 
     var body: some View {
         Form {
@@ -44,37 +46,129 @@ struct SettingsView: View {
             }
 
             Section("Excluded Apps") {
-                HStack {
-                    TextField("Bundle ID (e.g., com.example.app)", text: $excludedAppInput)
-                        .textFieldStyle(.roundedBorder)
-                    Button("Add") {
-                        guard !excludedAppInput.isEmpty else { return }
-                        preferences.excludedBundleIDs.insert(excludedAppInput)
-                        excludedAppInput = ""
-                    }
-                }
+                Text("Clipboard content from these apps will be ignored.")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
 
                 if preferences.excludedBundleIDs.isEmpty {
                     Text("No excluded apps")
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(.tertiary)
+                        .frame(maxWidth: .infinity, alignment: .center)
+                        .padding(.vertical, 8)
                 } else {
                     ForEach(Array(preferences.excludedBundleIDs).sorted(), id: \.self) { bundleID in
-                        HStack {
-                            Text(bundleID)
-                                .font(.body.monospaced())
-                            Spacer()
-                            Button("Remove") {
-                                preferences.excludedBundleIDs.remove(bundleID)
+                        excludedAppRow(bundleID)
+                    }
+                }
+
+                HStack(spacing: 8) {
+                    runningAppsMenu
+                    Button("Browse...") { isPickingApp = true }
+                }
+            }
+        }
+        .formStyle(.grouped)
+        .frame(width: 480, height: 400)
+        .navigationTitle("Stash Settings")
+        .fileImporter(
+            isPresented: $isPickingApp,
+            allowedContentTypes: [.applicationBundle]
+        ) { result in
+            if case .success(let url) = result,
+               let bundle = Bundle(path: url.path),
+               let bundleID = bundle.bundleIdentifier {
+                addExcludedApp(bundleID)
+            }
+        }
+    }
+
+    // MARK: - Excluded App Row
+
+    private func excludedAppRow(_ bundleID: String) -> some View {
+        HStack(spacing: 10) {
+            appIcon(for: bundleID)
+                .resizable()
+                .frame(width: 24, height: 24)
+
+            VStack(alignment: .leading, spacing: 1) {
+                Text(appName(for: bundleID))
+                Text(bundleID)
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+
+            Spacer()
+
+            Button {
+                removeExcludedApp(bundleID)
+            } label: {
+                Image(systemName: "xmark.circle.fill")
+                    .foregroundStyle(.secondary)
+            }
+            .buttonStyle(.plain)
+            .help("Remove")
+        }
+        .padding(.vertical, 2)
+    }
+
+    // MARK: - Running Apps Menu
+
+    private var runningAppsMenu: some View {
+        Menu("Add Running App...") {
+            let apps = NSWorkspace.shared.runningApplications
+                .filter { $0.activationPolicy == .regular && $0.bundleIdentifier != nil }
+                .filter { !preferences.excludedBundleIDs.contains($0.bundleIdentifier!) }
+                .sorted { ($0.localizedName ?? "") < ($1.localizedName ?? "") }
+
+            if apps.isEmpty {
+                Text("All running apps are excluded")
+            } else {
+                ForEach(apps, id: \.bundleIdentifier) { app in
+                    Button {
+                        if let id = app.bundleIdentifier {
+                            addExcludedApp(id)
+                        }
+                    } label: {
+                        if let icon = app.icon {
+                            Label {
+                                Text(app.localizedName ?? app.bundleIdentifier ?? "Unknown")
+                            } icon: {
+                                Image(nsImage: icon)
                             }
-                            .buttonStyle(.borderless)
-                            .foregroundStyle(.red)
+                        } else {
+                            Text(app.localizedName ?? app.bundleIdentifier ?? "Unknown")
                         }
                     }
                 }
             }
         }
-        .formStyle(.grouped)
-        .frame(width: 450, height: 350)
-        .navigationTitle("Stash Settings")
+    }
+
+    // MARK: - App Resolution
+
+    private func appIcon(for bundleID: String) -> Image {
+        if let url = NSWorkspace.shared.urlForApplication(withBundleIdentifier: bundleID) {
+            return Image(nsImage: NSWorkspace.shared.icon(forFile: url.path))
+        }
+        return Image(systemName: "questionmark.app")
+    }
+
+    private func appName(for bundleID: String) -> String {
+        if let url = NSWorkspace.shared.urlForApplication(withBundleIdentifier: bundleID) {
+            return FileManager.default.displayName(atPath: url.path)
+        }
+        return bundleID
+    }
+
+    // MARK: - Actions
+
+    private func addExcludedApp(_ bundleID: String) {
+        preferences.excludedBundleIDs.insert(bundleID)
+        onExcludedAppsChanged?()
+    }
+
+    private func removeExcludedApp(_ bundleID: String) {
+        preferences.excludedBundleIDs.remove(bundleID)
+        onExcludedAppsChanged?()
     }
 }
