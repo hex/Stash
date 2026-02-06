@@ -102,16 +102,15 @@
 - This applies to any `@Observable` class with computed properties backed by external storage (UserDefaults, Keychain, etc.)
 - Symptom: Toggle/Binding visually snaps back because SwiftUI never sees the mutation
 
-## NSStatusItem Click Handling
-- `NSStatusBarButton` only sends its action on left-click (`.leftMouseUp`) by default
-- Call `button.sendAction(on: [.leftMouseUp, .rightMouseUp])` to receive both click types
-- Inside the `@objc` action handler, check `NSApp.currentEvent?.type == .rightMouseUp` to branch
-- No need for a separate `NSMenu` or right-click monitor — single handler serves both
-- `NSApp.currentEvent?.clickCount` does NOT work for double-click detection on NSStatusBarButton
-- `sendAction(on:)` dispatches each mouse-up as an independent action — click count is always 1
-- Use manual timing: track `ProcessInfo.processInfo.systemUptime` between clicks
-- Compare against `NSEvent.doubleClickInterval` (respects user's system-wide preference)
-- For delayed single-click: schedule `DispatchWorkItem`, cancel if second click arrives in time
+## NSStatusItem Click Handling (Fragile)
+- `sendAction(on: [.leftMouseUp, .rightMouseUp])` BREAKS NSStatusBarButton click handling entirely
+- After setting it, the action handler never fires — even after removing the call in later builds
+- Ghost status bar icons: `pkill -x` kills the process but macOS may leave the icon visible
+- User clicks a dead/ghost icon that doesn't respond; real icon may be elsewhere in the bar
+- Fast kill-and-relaunch cycles can produce multiple ghost icons
+- `NSApp.currentEvent?.clickCount` unreliable for NSStatusBarButton double-click detection
+- `print()` goes to stdout only, not `log stream` — use file logging for debug (e.g. `/tmp/stash-debug.log`)
+- Debugging: add startup log to `/tmp/` file to verify setup, then check if clicks produce log entries
 
 ## XcodeGen Behavior
 - `xcodegen generate` must be re-run after adding/removing any Swift files
