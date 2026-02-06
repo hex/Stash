@@ -112,12 +112,13 @@
 - `print()` goes to stdout only, not `log stream` — use file logging for debug (e.g. `/tmp/stash-debug.log`)
 - Debugging: add startup log to `/tmp/` file to verify setup, then check if clicks produce log entries
 
-## Settings Window Inaccessible (Bug)
-- App is LSUIElement (no Dock icon, no app menu visible)
-- SwiftUI `Settings` scene opens via Cmd+Comma or app menu "Settings..." — both require the app to be active/focused
-- Since there's no Dock presence, the app menu is never visible — settings window is unreachable
-- Fix: add a gear icon to the popover's control bar that calls `NSApp.sendAction(Selector(("showSettingsWindow:")), to: nil, from: nil)`
-- macOS 14+ uses `showSettingsWindow:`, macOS 13 uses `showPreferencesWindow:`
+## SwiftUI Settings Scene Broken for LSUIElement Apps
+- SwiftUI `Settings` scene relies on the app menu's "Settings..." item to trigger `showSettingsWindow:` action
+- LSUIElement apps have NO app menu and NO Dock icon — the Settings scene exists but is completely unreachable
+- `NSApp.sendAction(Selector(("showSettingsWindow:")), to: nil, from: nil)` also fails — the action responder is never registered without the app menu
+- `NSApp.activate(ignoringOtherApps: true)` before `sendAction` doesn't help either
+- Fix: bypass Settings scene entirely, manage an NSWindow + NSHostingController manually
+- Use `isReleasedWhenClosed = false` to reuse the window, `NSApp.activate(ignoringOtherApps: true)` to bring to front
 
 ## Excluded Apps Don't Sync at Runtime (Bug)
 - `monitor.excludedBundleIDs = preferences.excludedBundleIDs` in AppController.init is a one-time copy

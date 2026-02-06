@@ -9,6 +9,7 @@ struct MenuBarView: View {
     let preferences: Preferences
     let onPaste: (ClipboardEntry) -> Void
     let onPauseChanged: (Bool) -> Void
+    let onOpenSettings: () -> Void
 
     @State private var copiedEntryID: PersistentIdentifier?
     @State private var hoveredEntryID: PersistentIdentifier?
@@ -99,6 +100,15 @@ struct MenuBarView: View {
 
     private var controlBar: some View {
         HStack(spacing: 12) {
+            Button {
+                onOpenSettings()
+            } label: {
+                Image(systemName: "gear")
+                    .foregroundStyle(.secondary)
+            }
+            .buttonStyle(.plain)
+            .help("Settings")
+
             Spacer()
 
             Toggle("Pause", isOn: Binding(

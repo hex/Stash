@@ -9,9 +9,9 @@ struct StashApp: App {
     @State private var appController = AppController()
 
     var body: some Scene {
-        Settings {
-            SettingsView(preferences: appController.preferences)
-        }
+        // Empty scene — settings window is managed by AppController directly
+        // because LSUIElement apps can't use the Settings scene (no app menu)
+        Settings { EmptyView() }
     }
 }
 
@@ -27,6 +27,7 @@ final class AppController {
     private var panelController: PanelController?
     private var statusItem: NSStatusItem?
     private var popover: NSPopover?
+    private var settingsWindow: NSWindow?
     private var started = false
 
     init() {
@@ -103,7 +104,10 @@ final class AppController {
                 storage: storage,
                 preferences: preferences,
                 onPaste: { [weak self] entry in self?.paste(entry) },
-                onPauseChanged: { [weak self] isPaused in self?.setPaused(isPaused) }
+                onPauseChanged: { [weak self] isPaused in self?.setPaused(isPaused) },
+                onOpenSettings: { [weak self] in
+                    self?.openSettings()
+                }
             )
         )
         pop.setValue(true, forKeyPath: "shouldHideAnchor")
@@ -218,6 +222,42 @@ final class AppController {
         preferences.isPaused = isPaused
         monitor.isPaused = isPaused
         updateStatusIcon()
+    }
+
+    func syncExcludedApps() {
+        monitor.excludedBundleIDs = preferences.excludedBundleIDs
+    }
+
+    func openSettings() {
+        popover?.performClose(nil)
+
+        if let existing = settingsWindow, existing.isVisible {
+            existing.makeKeyAndOrderFront(nil)
+            NSApp.activate(ignoringOtherApps: true)
+            return
+        }
+
+        let settingsView = SettingsView(
+            preferences: preferences,
+            onExcludedAppsChanged: { [weak self] in
+                self?.syncExcludedApps()
+            }
+        )
+
+        let window = NSWindow(
+            contentRect: NSRect(x: 0, y: 0, width: 480, height: 400),
+            styleMask: [.titled, .closable],
+            backing: .buffered,
+            defer: false
+        )
+        window.title = "Stash Settings"
+        window.contentViewController = NSHostingController(rootView: settingsView)
+        window.center()
+        window.isReleasedWhenClosed = false
+        self.settingsWindow = window
+
+        window.makeKeyAndOrderFront(nil)
+        NSApp.activate(ignoringOtherApps: true)
     }
 
 }
