@@ -106,3 +106,15 @@
 - [2026-02-06 09:37:24] Edit: /Users/hex/.claude-sessions/Stash/Stash/Stash/Views/MenuBarView.swift
 - [2026-02-06 09:39:30] Edit: /Users/hex/.claude-sessions/Stash/Stash/Stash/StashApp.swift
 - [2026-02-06 09:39:52] Write: /Users/hex/.claude-sessions/Stash/Stash/Stash/Views/MenuBarView.swift
+- [2026-02-06 09:40:20] Edit: /Users/hex/.claude/projects/-Users-hex--claude-sessions-Stash/memory/MEMORY.md
+- [2026-02-06 09:41:45] Edit: /Users/hex/.claude-sessions/Stash/Stash/Stash/Services/StorageManager.swift
+- [2026-02-06 09:41:56] Edit: /Users/hex/.claude-sessions/Stash/Stash/Stash/StashApp.swift
+- [2026-02-06 09:42:05] Edit: /Users/hex/.claude-sessions/Stash/Stash/Stash/StashApp.swift
+- [2026-02-06 09:42:09] Edit: /Users/hex/.claude-sessions/Stash/Stash/Stash/StashApp.swift
+- [2026-02-06 09:42:16] Edit: /Users/hex/.claude-sessions/Stash/Stash/Stash/StashApp.swift
+- [2026-02-06 09:43:42] Edit: /Users/hex/.claude-sessions/Stash/Stash/Stash/StashApp.swift
+- [2026-02-06 09:45:57] Edit: /Users/hex/.claude-sessions/Stash/Stash/Stash/StashApp.swift
+- [2026-02-06 09:48:30] Write: /Users/hex/.claude-sessions/Stash/Stash/Stash/StashApp.swift
+- [2026-02-06 09:48:36] Edit: /Users/hex/.claude-sessions/Stash/Stash/Stash/StashApp.swift
+- [2026-02-06 09:50:21] Edit: /Users/hex/.claude-sessions/Stash/Stash/Stash/StashApp.swift
+- [2026-02-06 09:51:16] Edit: /Users/hex/.claude-sessions/Stash/Stash/Stash/StashApp.swift

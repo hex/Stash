@@ -71,6 +71,15 @@
 - Fix: switch to `.window` style, which hosts a live SwiftUI view that participates in normal observation/rendering
 - `.window` style combined with an observable `changeCount` property on the data store gives real-time updates
 
+## NSStatusBarButton Icon Animation
+- SF Symbol animations (`.symbolEffect`, `.contentTransition`) do NOT work on MenuBarExtra labels — they render as static NSStatusBarButton images
+- For animated menu bar icons, must own the `NSStatusItem` directly (drop MenuBarExtra for the icon)
+- Frame-by-frame compositing works: draw outline + clipped fill with `NSBezierPath.addClip()` growing from bottom
+- MUST use `image.isTemplate = true` on composite images for correct light/dark mode rendering
+- MUST match the original `button.image.size` for composites — using `button.bounds.size` causes the icon to grow (bounds includes padding)
+- Use `NSImage(size:flipped:drawingHandler:)` for compositing (lockFocus is deprecated)
+- Guard with `isAnimating` flag to prevent overlapping animations from rapid copies
+
 ## macOS Unified Logging Privacy Redaction
 - `NSLog()` and `os_log` messages containing `%@` format specifiers are redacted as `<private>` in `log stream` output
 - This happens unless the process is attached to a debugger (Xcode)
