@@ -185,6 +185,7 @@ final class AppController {
 
     func paste(_ entry: ClipboardEntry) {
         pasteService.paste(entry)
+        animateStatusIcon()
     }
 
     func togglePanel() {
