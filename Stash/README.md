@@ -169,7 +169,7 @@ Stash uses calendar versioning: **YYYY.M.PATCH**
 
 Examples: `2026.2.0`, `2026.2.1`, `2026.12.0`
 
-The build number (`CFBundleVersion`) uses the format `YYYYMPATCH` for monotonic ordering.
+The build number (`CFBundleVersion`) is an incrementing integer independent of the version string.
 
 ## License
 
