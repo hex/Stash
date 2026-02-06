@@ -80,6 +80,7 @@ final class AppController {
         let item = NSStatusBar.system.statusItem(withLength: NSStatusItem.squareLength)
         item.button?.target = self
         item.button?.action = #selector(statusItemClicked)
+        item.button?.sendAction(on: [.leftMouseUp, .rightMouseUp])
         item.button?.wantsLayer = true
         self.statusItem = item
         updateStatusIcon()
@@ -100,6 +101,10 @@ final class AppController {
     }
 
     @objc private func statusItemClicked() {
+        if NSApp.currentEvent?.type == .rightMouseUp {
+            setPaused(!monitor.isPaused)
+            return
+        }
         guard let button = statusItem?.button, let popover else { return }
         if popover.isShown {
             popover.performClose(nil)

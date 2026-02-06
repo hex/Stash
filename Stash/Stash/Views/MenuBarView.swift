@@ -31,21 +31,19 @@ struct MenuBarView: View {
                             let isCopied = copiedEntryID == entry.persistentModelID
                             let isHovered = hoveredEntryID == entry.persistentModelID
 
-                            ZStack {
-                                if isCopied {
-                                    HStack(spacing: 6) {
-                                        Image(systemName: "checkmark.circle.fill")
-                                            .foregroundStyle(.green)
-                                        Text("Copied")
-                                            .foregroundStyle(.green)
+                            EntryRowView(entry: entry, isSelected: false)
+                                .opacity(isCopied ? 0 : 1)
+                                .overlay {
+                                    if isCopied {
+                                        HStack(spacing: 6) {
+                                            Image(systemName: "checkmark.circle.fill")
+                                                .foregroundStyle(.green)
+                                            Text("Copied")
+                                                .foregroundStyle(.green)
+                                        }
+                                        .font(.body)
                                     }
-                                    .font(.body)
-                                    .frame(maxWidth: .infinity)
-                                    .padding(.vertical, 6)
-                                } else {
-                                    EntryRowView(entry: entry, isSelected: false)
                                 }
-                            }
                             .background(
                                 isCopied ? Color.green.opacity(0.1) :
                                 isHovered ? Color.primary.opacity(0.06) :
