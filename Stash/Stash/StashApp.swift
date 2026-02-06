@@ -50,17 +50,26 @@ final class AppController {
         monitor.isPaused = preferences.isPaused
 
         monitor.onClipboardChange = { [weak self] contentType, plainText, urlString, filePaths, imageData, richTextData, bundleID, appName in
-            guard let self else { return }
-            try? self.storage.save(
-                contentType: contentType,
-                plainText: plainText,
-                urlString: urlString,
-                filePaths: filePaths,
-                imageData: imageData,
-                richTextData: richTextData,
-                sourceAppBundleID: bundleID,
-                sourceAppName: appName
-            )
+            guard let self else {
+                debugLog("callback: self is nil")
+                return
+            }
+            debugLog("saving: \(contentType)")
+            do {
+                try self.storage.save(
+                    contentType: contentType,
+                    plainText: plainText,
+                    urlString: urlString,
+                    filePaths: filePaths,
+                    imageData: imageData,
+                    richTextData: richTextData,
+                    sourceAppBundleID: bundleID,
+                    sourceAppName: appName
+                )
+                debugLog("saved OK")
+            } catch {
+                debugLog("save FAILED: \(error)")
+            }
         }
 
         let controller = PanelController(storage: storage) { [weak self] entry in
@@ -81,6 +90,7 @@ final class AppController {
     private func startServices() {
         guard !started else { return }
         started = true
+        debugLog("startServices() called, isPaused=\(monitor.isPaused)")
         monitor.start()
         hotkeyManager.start()
         requestAccessibilityIfNeeded()
