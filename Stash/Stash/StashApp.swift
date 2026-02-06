@@ -78,14 +78,11 @@ final class AppController {
 
     private func setupStatusItem() {
         let item = NSStatusBar.system.statusItem(withLength: NSStatusItem.squareLength)
-        item.button?.image = NSImage(
-            systemSymbolName: "clipboard",
-            accessibilityDescription: "Stash clipboard history"
-        )
         item.button?.target = self
         item.button?.action = #selector(statusItemClicked)
         item.button?.wantsLayer = true
         self.statusItem = item
+        updateStatusIcon()
 
         let pop = NSPopover()
         pop.contentSize = NSSize(width: 320, height: 360)
@@ -111,15 +108,43 @@ final class AppController {
         }
     }
 
+    private func updateStatusIcon() {
+        guard let button = statusItem?.button else { return }
+        if monitor.isPaused {
+            button.image = Self.pausedIcon()
+        } else {
+            button.image = NSImage(
+                systemSymbolName: "clipboard",
+                accessibilityDescription: "Stash clipboard history"
+            )
+        }
+    }
+
+    nonisolated static func pausedIcon() -> NSImage {
+        let base = NSImage(
+            systemSymbolName: "clipboard",
+            accessibilityDescription: "Stash - paused"
+        )!
+        let size = base.size
+        let image = NSImage(size: size, flipped: false) { rect in
+            base.draw(in: rect)
+            let path = NSBezierPath()
+            path.lineWidth = 1.5
+            path.move(to: NSPoint(x: rect.width * 0.15, y: rect.height * 0.85))
+            path.line(to: NSPoint(x: rect.width * 0.85, y: rect.height * 0.15))
+            NSColor.black.setStroke()
+            path.stroke()
+            return true
+        }
+        image.isTemplate = true
+        return image
+    }
+
     private func animateStatusIcon() {
         guard let button = statusItem?.button else { return }
 
         let fillImage = NSImage(
             systemSymbolName: "clipboard.fill",
-            accessibilityDescription: nil
-        )
-        let outlineImage = NSImage(
-            systemSymbolName: "clipboard",
             accessibilityDescription: nil
         )
 
@@ -129,12 +154,12 @@ final class AppController {
         button.layer?.add(fadeIn, forKey: "fillIn")
         button.image = fillImage
 
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) {
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) { [weak self] in
             let fadeOut = CATransition()
             fadeOut.type = .fade
             fadeOut.duration = 0.15
             button.layer?.add(fadeOut, forKey: "fillOut")
-            button.image = outlineImage
+            self?.updateStatusIcon()
         }
     }
 
@@ -169,5 +194,6 @@ final class AppController {
     func setPaused(_ isPaused: Bool) {
         preferences.isPaused = isPaused
         monitor.isPaused = isPaused
+        updateStatusIcon()
     }
 }
