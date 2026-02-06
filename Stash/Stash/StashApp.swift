@@ -18,7 +18,7 @@ struct StashApp: App {
                 onPauseChanged: { appController.setPaused($0) }
             )
         }
-        .menuBarExtraStyle(.menu)
+        .menuBarExtraStyle(.window)
 
         Settings {
             SettingsView(preferences: appController.preferences)
