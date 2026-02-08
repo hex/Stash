@@ -25,8 +25,10 @@
 		CADDA1DFC470257E3F084CDC /* Preferences.swift in Sources */ = {isa = PBXBuildFile; fileRef = B49BB01FA9B8AC8C4CA65511 /* Preferences.swift */; };
 		D8D380EAC3086689FE139529 /* PasteServiceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0011E8581D839D0C7048F0D5 /* PasteServiceTests.swift */; };
 		D936FEC241FC04E795647794 /* ClipboardEntryTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 155A9904AA293878B64E9325 /* ClipboardEntryTests.swift */; };
+		DFD0CF06A325B198900C2880 /* UpdaterController.swift in Sources */ = {isa = PBXBuildFile; fileRef = A71AF8BF5BCE09A1B08CAA59 /* UpdaterController.swift */; };
 		E80FD730A3D17A03F4365824 /* StorageManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8743F0AF18752419DE6CAC97 /* StorageManager.swift */; };
 		F104DE77DA893A46FE0CF7BA /* ClipboardMonitorTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 75C2F5E8267415CB0256C6BA /* ClipboardMonitorTests.swift */; };
+		FF436F5052A87D99037D944C /* Sparkle in Frameworks */ = {isa = PBXBuildFile; productRef = 317E63DEA948316B4C229557 /* Sparkle */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -56,6 +58,7 @@
 		7C3978B293FAB87F437B2D89 /* ContentType.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentType.swift; sourceTree = "<group>"; };
 		8743F0AF18752419DE6CAC97 /* StorageManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StorageManager.swift; sourceTree = "<group>"; };
 		95D0B204806C2BD53904C7CE /* PasteService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PasteService.swift; sourceTree = "<group>"; };
+		A71AF8BF5BCE09A1B08CAA59 /* UpdaterController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UpdaterController.swift; sourceTree = "<group>"; };
 		B0553447F301994707851C31 /* StashTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = StashTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		B49BB01FA9B8AC8C4CA65511 /* Preferences.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Preferences.swift; sourceTree = "<group>"; };
 		C1BAF2E42C8667F827D380BE /* PreferencesTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PreferencesTests.swift; sourceTree = "<group>"; };
@@ -65,6 +68,17 @@
 		FE48DBAB68E9E944D7AA11A7 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		FF2AED5E66FAB2122C8437E2 /* Stash.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Stash.app; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		97EADDFE94C633D455420B29 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				FF436F5052A87D99037D944C /* Sparkle in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
 		095053D8E54CA87815507332 /* Support */ = {
@@ -82,6 +96,7 @@
 				1F492E4F7F74825D3092524A /* CryptoService.swift */,
 				336AEB429DB905D6E693F12A /* PasteboardConstants.swift */,
 				B49BB01FA9B8AC8C4CA65511 /* Preferences.swift */,
+				A71AF8BF5BCE09A1B08CAA59 /* UpdaterController.swift */,
 			);
 			path = Support;
 			sourceTree = "<group>";
@@ -204,6 +219,7 @@
 			buildPhases = (
 				6C13513CC4C46FC36B1B1B62 /* Sources */,
 				AE68EC794A69DDBAA88CF2AF /* Resources */,
+				97EADDFE94C633D455420B29 /* Frameworks */,
 			);
 			buildRules = (
 			);
@@ -211,6 +227,7 @@
 			);
 			name = Stash;
 			packageProductDependencies = (
+				317E63DEA948316B4C229557 /* Sparkle */,
 			);
 			productName = Stash;
 			productReference = FF2AED5E66FAB2122C8437E2 /* Stash.app */;
@@ -235,6 +252,9 @@
 			);
 			mainGroup = 3882CD9E441306002BF13144;
 			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				2115131D385E9C30711B4861 /* XCRemoteSwiftPackageReference "Sparkle" */,
+			);
 			preferredProjectObjectVersion = 77;
 			projectDirPath = "";
 			projectRoot = "";
@@ -273,6 +293,7 @@
 				280D27CD05B87EAD345A0C7D /* SettingsView.swift in Sources */,
 				B790160B7DAAC2FA787342DD /* StashApp.swift in Sources */,
 				E80FD730A3D17A03F4365824 /* StorageManager.swift in Sources */,
+				DFD0CF06A325B198900C2880 /* UpdaterController.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -527,6 +548,25 @@
 			defaultConfigurationName = Debug;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		2115131D385E9C30711B4861 /* XCRemoteSwiftPackageReference "Sparkle" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/sparkle-project/Sparkle";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 2.6.0;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		317E63DEA948316B4C229557 /* Sparkle */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 2115131D385E9C30711B4861 /* XCRemoteSwiftPackageReference "Sparkle" */;
+			productName = Sparkle;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = 033F29620E5209F5D0401DB9 /* Project object */;
 }

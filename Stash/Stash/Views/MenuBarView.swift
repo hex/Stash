@@ -13,6 +13,7 @@ struct MenuBarView: View {
 
     @State private var copiedEntryID: PersistentIdentifier?
     @State private var hoveredEntryID: PersistentIdentifier?
+    @State private var isConfirmingQuit = false
 
     var body: some View {
         let _ = storage.changeCount
@@ -136,13 +137,18 @@ struct MenuBarView: View {
             .controlSize(.small)
 
             Button {
-                NSApplication.shared.terminate(nil)
+                isConfirmingQuit = true
             } label: {
                 Image(systemName: "power")
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(.red)
             }
             .buttonStyle(.plain)
             .help("Quit Stash")
+            .confirmationDialog("Quit Stash?", isPresented: $isConfirmingQuit) {
+                Button("Quit", role: .destructive) {
+                    NSApplication.shared.terminate(nil)
+                }
+            }
         }
         .padding(.horizontal, 12)
         .padding(.vertical, 10)

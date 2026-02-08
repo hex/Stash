@@ -189,6 +189,17 @@
 
 ## XcodeGen Behavior
 - `xcodegen generate` must be re-run after adding/removing any Swift files
-- Entitlements: XcodeGen may normalize/strip entries (empty `<dict/>` is correct for non-sandboxed)
+- Entitlements: XcodeGen's `entitlements:` block OVERWRITES the file on generate — remove it and use only `CODE_SIGN_ENTITLEMENTS` build setting to preserve custom entries
 - The .xcodeproj should be regenerated, not manually edited
+- SPM packages: add `packages:` at top level, reference with `- package: Name` in target dependencies
+
+## Sparkle Auto-Update Integration
+- Sparkle 2.8.1 via SPM (binary XCFramework target, ~60MB download)
+- `SPUStandardUpdaterController(startingUpdater: true, ...)` auto-starts 24h check cycle
+- `@preconcurrency import Sparkle` needed for Swift 6 strict concurrency
+- Hardened Runtime + ad-hoc signing requires `com.apple.security.cs.disable-library-validation` entitlement
+- Without it, Library Validation blocks loading Sparkle's binary framework at runtime
+- `SUFeedURL` in Info.plist points to appcast XML (e.g., raw GitHub URL)
+- `SUPublicEDKey` in Info.plist holds EdDSA public key (generated once via `./bin/generate_keys`)
+- xcodebuild + iOS device probing can block SPM resolution; use `-destination 'platform=macOS'` to avoid
 
