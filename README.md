@@ -20,7 +20,7 @@
 ## Features
 
 - **Clipboard monitoring** -- polls the system pasteboard every 0.3s and captures all content types
-- **Menu bar popover** -- click the clipboard icon to see your recent entries with content previews
+- **Menu bar popover** -- translucent frosted-glass popover with colored content-type badges and divider-separated entries
 - **Image thumbnails** -- inline image previews in the entry list, with a preview button to open full images
 - **Context menus** -- right-click any entry to Copy, Pin/Unpin, Preview (images), or Delete
 - **Encrypted storage** -- all clipboard content is AES-256-GCM encrypted at rest with a Keychain-stored key
@@ -69,11 +69,11 @@ xcodebuild -scheme Stash -configuration Debug build
 
 ### Menu Bar
 
-Click the clipboard icon in the menu bar to open a popover showing your recent clipboard entries. Each entry shows:
+Click the clipboard icon in the menu bar to open a translucent popover showing your recent clipboard entries. Each entry shows:
 
-- Content type icon (text, rich text, image, file, URL)
+- Colored badge indicating content type (gray for text, purple for images, blue for URLs, yellow for files)
 - Preview text (up to 2 lines) or image thumbnail
-- Source app name and human-friendly timestamp
+- Source app name (bold) and human-friendly timestamp
 
 Click any entry to paste it. Right-click for context menu actions (Copy, Pin, Delete, Preview). Right-click the menu bar icon to toggle pause.
 
@@ -145,15 +145,15 @@ Stash/
 │   │   ├── StorageManager.swift    # SwiftData persistence + encryption
 │   │   └── PasteService.swift      # Paste-from-history
 │   ├── Views/
-│   │   ├── MenuBarView.swift       # Menu bar popover content
-│   │   ├── EntryRowView.swift      # Clipboard entry row + image preview
+│   │   ├── MenuBarView.swift       # Translucent popover with entry list and controls
+│   │   ├── EntryRowView.swift      # Entry row with colored badge and content preview
 │   │   └── SettingsView.swift      # Preferences UI
 │   └── Support/
 │       ├── CryptoService.swift     # AES-256-GCM encryption + Keychain key storage
 │       ├── Preferences.swift       # UserDefaults wrapper
 │       ├── PasteboardConstants.swift
 │       └── UpdaterController.swift # Sparkle auto-update integration
-└── StashTests/                 # 84 tests across 7 files
+└── StashTests/                 # 88 tests across 7 files
     ├── Model/
     ├── Services/
     └── Support/

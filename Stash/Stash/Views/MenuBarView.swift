@@ -31,7 +31,7 @@ struct MenuBarView: View {
             controlBar
         }
         .frame(width: 340, height: 400)
-        .background(Color(.windowBackgroundColor))
+        .background(.ultraThinMaterial)
     }
 
     // MARK: - Empty State
