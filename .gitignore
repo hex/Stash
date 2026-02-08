@@ -4,7 +4,10 @@
 *.bak
 
 # Archives (large, regenerated from artifacts)
-archives/
+.cs/archives/
+
+# Session cooldown markers
+.cs/.discoveries-reminder-cooldown
 
 # OS files
 .DS_Store
