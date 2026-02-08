@@ -39,18 +39,12 @@ final class ClipboardMonitor {
             return NSWorkspace.shared.frontmostApplication
         }
 
-        for window in windowList {
-            guard let pid = window[kCGWindowOwnerPID as String] as? pid_t,
-                  let bounds = window[kCGWindowBounds as String] as? [String: Any],
-                  let width = bounds["Width"] as? Int,
-                  let height = bounds["Height"] as? Int,
-                  width > 50, height > 50 else {
-                continue
-            }
+        let ownPID = ProcessInfo.processInfo.processIdentifier
+        if let pid = Self.sourceWindowOwnerPID(from: windowList, ownBundleID: ownBundleID, ownPID: ownPID) {
             let app = NSRunningApplication(processIdentifier: pid)
-            if app?.bundleIdentifier == ownBundleID { continue }
-            if app?.activationPolicy != .regular && app?.activationPolicy != .accessory { continue }
-            return app
+            if let app, app.activationPolicy == .regular || app.activationPolicy == .accessory {
+                return app
+            }
         }
 
         return NSWorkspace.shared.frontmostApplication
@@ -80,6 +74,31 @@ final class ClipboardMonitor {
         }
 
         return false
+    }
+
+    // MARK: - Static source window detection (testable)
+
+    /// Finds the PID of the app owning the topmost normal window in a window list.
+    /// Skips windows that are too small, at non-zero layers, or owned by this app.
+    nonisolated static func sourceWindowOwnerPID(
+        from windowList: [[String: Any]],
+        ownBundleID: String?,
+        ownPID: pid_t? = nil
+    ) -> pid_t? {
+        for window in windowList {
+            guard let pid = window[kCGWindowOwnerPID as String] as? pid_t,
+                  let layer = window[kCGWindowLayer as String] as? Int,
+                  layer == 0,
+                  let bounds = window[kCGWindowBounds as String] as? [String: Any],
+                  let width = bounds["Width"] as? Int,
+                  let height = bounds["Height"] as? Int,
+                  width > 50, height > 50 else {
+                continue
+            }
+            if let ownPID, pid == ownPID { continue }
+            return pid
+        }
+        return nil
     }
 
     // MARK: - Private

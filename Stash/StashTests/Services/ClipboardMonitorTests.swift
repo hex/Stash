@@ -92,4 +92,80 @@ final class ClipboardMonitorTests: XCTestCase {
             )
         )
     }
+
+    // MARK: - Source window detection
+
+    func testSkipsHighLayerWindows() {
+        let windows: [[String: Any]] = [
+            // Notification Center at layer 25 — should be skipped
+            [
+                "kCGWindowOwnerPID": Int32(100),
+                "kCGWindowLayer": 25,
+                "kCGWindowBounds": ["Width": 400, "Height": 80, "X": 0, "Y": 0],
+            ],
+            // Chrome at layer 0 — should be picked
+            [
+                "kCGWindowOwnerPID": Int32(200),
+                "kCGWindowLayer": 0,
+                "kCGWindowBounds": ["Width": 1200, "Height": 800, "X": 0, "Y": 0],
+            ],
+        ]
+        let pid = ClipboardMonitor.sourceWindowOwnerPID(from: windows, ownBundleID: nil)
+        XCTAssertEqual(pid, 200)
+    }
+
+    func testSkipsSmallWindows() {
+        let windows: [[String: Any]] = [
+            // Tiny status bar widget — should be skipped
+            [
+                "kCGWindowOwnerPID": Int32(100),
+                "kCGWindowLayer": 0,
+                "kCGWindowBounds": ["Width": 30, "Height": 22, "X": 0, "Y": 0],
+            ],
+            // Normal window
+            [
+                "kCGWindowOwnerPID": Int32(200),
+                "kCGWindowLayer": 0,
+                "kCGWindowBounds": ["Width": 800, "Height": 600, "X": 0, "Y": 0],
+            ],
+        ]
+        let pid = ClipboardMonitor.sourceWindowOwnerPID(from: windows, ownBundleID: nil)
+        XCTAssertEqual(pid, 200)
+    }
+
+    func testSkipsOwnWindows() {
+        let windows: [[String: Any]] = [
+            // Our own app's window
+            [
+                "kCGWindowOwnerPID": Int32(100),
+                "kCGWindowOwnerName": "Stash",
+                "kCGWindowLayer": 0,
+                "kCGWindowBounds": ["Width": 400, "Height": 300, "X": 0, "Y": 0],
+            ],
+            // Another app's window
+            [
+                "kCGWindowOwnerPID": Int32(200),
+                "kCGWindowLayer": 0,
+                "kCGWindowBounds": ["Width": 800, "Height": 600, "X": 0, "Y": 0],
+            ],
+        ]
+        let pid = ClipboardMonitor.sourceWindowOwnerPID(
+            from: windows,
+            ownBundleID: "com.hexul.Stash",
+            ownPID: 100
+        )
+        XCTAssertEqual(pid, 200)
+    }
+
+    func testReturnsNilWhenNoValidWindows() {
+        let windows: [[String: Any]] = [
+            [
+                "kCGWindowOwnerPID": Int32(100),
+                "kCGWindowLayer": 25,
+                "kCGWindowBounds": ["Width": 400, "Height": 80, "X": 0, "Y": 0],
+            ],
+        ]
+        let pid = ClipboardMonitor.sourceWindowOwnerPID(from: windows, ownBundleID: nil)
+        XCTAssertNil(pid)
+    }
 }
