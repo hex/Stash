@@ -6,18 +6,24 @@ Built with Swift 6 (strict concurrency), SwiftUI, SwiftData, and AppKit. Require
 
 ## Features
 
-- **Clipboard monitoring** -- polls the system pasteboard every 0.5s and captures all content types
-- **Menu bar popover** -- click the clipboard icon to see your 10 most recent entries
-- **Spotlight-like search panel** -- press **Cmd+Shift+V** to open a floating panel with full-text search and content type filters
-- **Quick select** -- press **Cmd+1** through **Cmd+9** to instantly paste an entry by position
+- **Clipboard monitoring** -- polls the system pasteboard every 0.3s and captures all content types
+- **Menu bar popover** -- click the clipboard icon to see your recent entries with content previews
+- **Image thumbnails** -- inline image previews in the entry list, with a preview button to open full images
+- **Context menus** -- right-click any entry to Copy, Pin/Unpin, Preview (images), or Delete
+- **Encrypted storage** -- all clipboard content is AES-256-GCM encrypted at rest with a Keychain-stored key
 - **Animated capture feedback** -- the menu bar icon flashes when a new entry is recorded
 - **Password manager filtering** -- automatically skips entries from 1Password, KeePassXC, and other apps that mark clipboard content as concealed or transient
-- **App exclusion** -- block specific apps from being recorded by bundle ID
+- **App exclusion** -- block specific apps from being recorded, with a running apps picker for easy selection
 - **Consecutive dedup** -- identical back-to-back copies are stored once
 - **Pinned entries** -- pinned entries are protected from history limit pruning
+- **Auto-expiry** -- optionally delete entries older than 24 hours, 7 days, or 30 days
+- **Clear on quit** -- optionally wipe all history when the app terminates
+- **Time Machine exclusion** -- the SwiftData store is excluded from backups
 - **Rich text paste** -- pastes RTF content with a plain text fallback for maximum compatibility
+- **Source app detection** -- identifies the source app via window stacking order, handling non-activating panels like iTerm's quake window
+- **Right-click to pause** -- right-click the menu bar icon to toggle recording
 - **Launch at login** -- uses the modern `SMAppService` API
-- **No external dependencies** -- pure Apple frameworks (AppKit, SwiftUI, SwiftData)
+- **No external dependencies** -- pure Apple frameworks (AppKit, SwiftUI, SwiftData, CryptoKit)
 
 ## Install
 
@@ -46,8 +52,6 @@ xcodegen generate
 xcodebuild -scheme Stash -configuration Debug build
 ```
 
-On first launch, macOS will prompt for **Accessibility** permission (System Settings > Privacy & Security > Accessibility). This is required for the global **Cmd+Shift+V** hotkey. Restart the app after granting access.
-
 ## Usage
 
 ### Menu Bar
@@ -55,35 +59,24 @@ On first launch, macOS will prompt for **Accessibility** permission (System Sett
 Click the clipboard icon in the menu bar to open a popover showing your recent clipboard entries. Each entry shows:
 
 - Content type icon (text, rich text, image, file, URL)
-- Preview text (up to 2 lines)
-- Source app name and relative timestamp
+- Preview text (up to 2 lines) or image thumbnail
+- Source app name and human-friendly timestamp
 
-Click any entry to place it on the clipboard. Use the **Pause** toggle to temporarily stop recording.
-
-### Search Panel
-
-Press **Cmd+Shift+V** anywhere to open the floating search panel.
-
-| Key | Action |
-|---|---|
-| Type | Filter entries by text |
-| Up/Down | Navigate entries |
-| Return | Paste selected entry |
-| Escape | Dismiss panel |
-| Cmd+1-9 | Quick-select by position |
-
-Filter chips at the top let you narrow results by content type: All, Text, Rich, Images, Files, URLs.
+Click any entry to paste it. Right-click for context menu actions (Copy, Pin, Delete, Preview). Right-click the menu bar icon to toggle pause.
 
 ### Settings
 
-Access via the app menu (Cmd+,). Configurable options:
+Open via the gear icon in the popover. Configurable options:
 
 | Setting | Default | Range |
 |---|---|---|
 | History limit | 500 | 10 - 10,000 entries |
-| Polling interval | 0.5s | 0.1 - 5.0s |
 | Launch at login | Off | -- |
-| Excluded apps | None | Bundle IDs |
+| Excluded apps | None | Pick from running apps or enter bundle IDs |
+| Retention | Forever | Never / 24 hours / 7 days / 30 days |
+| Clear history on quit | Off | -- |
+
+The Privacy section also has a **Clear All History** button.
 
 ## Privacy
 
@@ -96,20 +89,24 @@ Stash automatically skips clipboard content marked with privacy indicators:
 
 You can also exclude specific apps entirely from recording via Settings.
 
-The app is **not sandboxed** and stores clipboard history locally via SwiftData. Image and rich text blobs are stored as external files on disk. No data is sent to any server.
+**Encryption:** All clipboard content fields (text, URLs, file paths, images, rich text) are encrypted at rest using AES-256-GCM. The symmetric key is stored in the macOS Keychain with device-only access (`kSecAttrAccessibleWhenUnlockedThisDeviceOnly`).
+
+**Time Machine:** The SwiftData store directory is excluded from Time Machine backups.
+
+The app is **not sandboxed** and stores clipboard history locally via SwiftData. No data is sent to any server.
 
 ## Architecture
 
 ```
-NSPasteboard.general (polled every 0.5s)
+NSPasteboard.general (polled every 0.3s)
     |
-ClipboardMonitor -- detect change, filter, classify, extract
+ClipboardMonitor -- detect change, identify source app, filter, classify
     |
 AppController -- orchestrates all services
     |
-StorageManager -- SwiftData persistence, dedup, history limits
+StorageManager + CryptoService -- encrypt, persist, decrypt, dedup
     |
-MenuBarView / SearchView -- observe StorageManager.changeCount
+MenuBarView -- observe StorageManager.changeCount
     |
 PasteService -- write entry back to pasteboard
 ```
@@ -117,6 +114,8 @@ PasteService -- write entry back to pasteboard
 **AppController** (`@MainActor @Observable`) owns all services and wires them together with closures. All services run on the main actor (required by SwiftData's `ModelContext` and AppKit's `NSPasteboard`).
 
 The app uses a custom `NSStatusItem` + `NSPopover` rather than SwiftUI's `MenuBarExtra` to support animated icon transitions and live-updating views.
+
+**Source app detection** uses `CGWindowListCopyWindowInfo` to find the topmost on-screen window by stacking order. This correctly identifies the source app even for non-activating panels (e.g. iTerm's quake window) that don't register as `frontmostApplication`.
 
 ## Project Structure
 
@@ -129,22 +128,18 @@ Stash/
 │   │   ├── ClipboardEntry.swift    # SwiftData model
 │   │   └── ContentType.swift       # Content type enum + detection
 │   ├── Services/
-│   │   ├── ClipboardMonitor.swift  # Pasteboard polling
-│   │   ├── StorageManager.swift    # SwiftData persistence
-│   │   ├── PasteService.swift      # Paste-from-history
-│   │   └── HotkeyManager.swift     # Global hotkey (Cmd+Shift+V)
+│   │   ├── ClipboardMonitor.swift  # Pasteboard polling + source app detection
+│   │   ├── StorageManager.swift    # SwiftData persistence + encryption
+│   │   └── PasteService.swift      # Paste-from-history
 │   ├── Views/
 │   │   ├── MenuBarView.swift       # Menu bar popover content
-│   │   ├── SearchView.swift        # Spotlight-like search panel
-│   │   ├── EntryRowView.swift      # Clipboard entry row
+│   │   ├── EntryRowView.swift      # Clipboard entry row + image preview
 │   │   └── SettingsView.swift      # Preferences UI
-│   ├── Panel/
-│   │   ├── FloatingPanel.swift     # NSPanel subclass
-│   │   └── PanelController.swift   # Panel lifecycle
 │   └── Support/
+│       ├── CryptoService.swift     # AES-256-GCM encryption + Keychain key storage
 │       ├── Preferences.swift       # UserDefaults wrapper
 │       └── PasteboardConstants.swift
-└── StashTests/                 # 65 tests across 6 files
+└── StashTests/                 # 84 tests across 7 files
     ├── Model/
     ├── Services/
     └── Support/
