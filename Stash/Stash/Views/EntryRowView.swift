@@ -26,6 +26,17 @@ struct EntryRowView: View {
 
             Spacer(minLength: 4)
 
+            if entry.contentType == .image, entry.imageData != nil {
+                Button {
+                    previewImage()
+                } label: {
+                    Image(systemName: "eye")
+                        .foregroundStyle(.secondary)
+                }
+                .buttonStyle(.plain)
+                .help("Preview image")
+            }
+
             if entry.isPinned {
                 Image(systemName: "pin.fill")
                     .foregroundStyle(.red)
@@ -73,10 +84,18 @@ struct EntryRowView: View {
     private var contentPreview: some View {
         switch entry.contentType {
         case .image:
-            Text(imageDimensionText)
-                .lineLimit(1)
-                .font(.body.weight(.medium))
-                .foregroundStyle(.purple)
+            if let data = entry.imageData, let nsImage = NSImage(data: data) {
+                Image(nsImage: nsImage)
+                    .resizable()
+                    .aspectRatio(contentMode: .fit)
+                    .frame(maxHeight: 48)
+                    .cornerRadius(4)
+            } else {
+                Text("Image")
+                    .lineLimit(1)
+                    .font(.body.weight(.medium))
+                    .foregroundStyle(.purple)
+            }
         default:
             Text(previewText)
                 .lineLimit(2)
@@ -110,6 +129,15 @@ struct EntryRowView: View {
         default:
             return entry.plainText ?? ""
         }
+    }
+
+    // MARK: - Actions
+
+    private func previewImage() {
+        guard let data = entry.imageData else { return }
+        let url = FileManager.default.temporaryDirectory.appendingPathComponent("stash-preview.png")
+        try? data.write(to: url)
+        NSWorkspace.shared.open(url)
     }
 
     // MARK: - Timestamp
