@@ -1,13 +1,13 @@
+# Development session artifacts
+.cs/
+.beads/
+.claude/
+CLAUDE.md
+
 # Transient files
 *.lock
 *.tmp
 *.bak
-
-# Archives (large, regenerated from artifacts)
-.cs/archives/
-
-# Session cooldown markers
-.cs/.discoveries-reminder-cooldown
 
 # OS files
 .DS_Store
