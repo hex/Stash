@@ -7,8 +7,11 @@
 
 ## macOS Clipboard API Findings
 - NSPasteboard has no source attribution — doesn't tell you which app wrote to it
-- `frontmostApplication` at poll time is unreliable — focus may shift between copy and timer tick
-- Fix: observe `NSWorkspace.didActivateApplicationNotification` to track last active app continuously
+- `frontmostApplication` is unreliable — misses non-activating panels (iTerm quake window, Spotlight, Alfred)
+- `didActivateApplicationNotification` also misses these — non-activating panels don't trigger activation
+- Fix: `CGWindowListCopyWindowInfo([.optionOnScreenOnly, .excludeDesktopElements])` returns windows in front-to-back order
+- Walk the list for the first layer-0 window not owned by our app → that's the actual source app
+- This catches quake-style windows, floating panels, and any non-standard window that accepts input
 - NSPasteboard has no change notification - must poll via Timer checking `changeCount`
 - Password manager detection: check for `org.nspasteboard.ConcealedType` and `org.nspasteboard.TransientType` UTIs on pasteboard items
 - Additional privacy markers: `de.petermaurer.TransientPasteboardType`, `com.agilebits.onepassword`
