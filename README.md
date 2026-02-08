@@ -44,8 +44,6 @@
 brew install --cask hex/tap/stash
 ```
 
-> Ad-hoc signed — on first launch, right-click the app and choose **Open** to bypass Gatekeeper.
-
 ### Build from Source
 
 **Prerequisites:**
