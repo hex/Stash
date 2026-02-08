@@ -204,3 +204,16 @@
 - xcodebuild + iOS device probing can block SPM resolution; use `-destination 'platform=macOS'` to avoid
 - Sparkle tools path in SPM: `DerivedData/Stash-*/SourcePackages/artifacts/sparkle/Sparkle/bin/` (generate_keys, sign_update, generate_appcast)
 
+## CGWindowList Layer Filtering (Bug Fix)
+- `CGWindowListCopyWindowInfo` returns ALL visible windows regardless of window layer
+- Notification Center banners sit at layer 25+, normal app windows at layer 0
+- Without filtering on `kCGWindowLayer == 0`, notifications are picked as the "source app" when visible during a copy
+- The original design notes specified "layer-0 window" but the implementation missed the check
+- Fix: add `layer == 0` guard in the window list walker
+- Extracted filtering into `sourceWindowOwnerPID(from:ownBundleID:ownPID:)` static method for testability
+
+## GitHub README Visibility
+- GitHub only renders README.md at the repository root (or `docs/`), not from subdirectories
+- A README nested in `Stash/` (the Xcode project dir) was invisible on the repo landing page
+- Moved to repo root with icon path adjusted to `Stash/stash-icon.png`
+
