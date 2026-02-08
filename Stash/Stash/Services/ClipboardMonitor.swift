@@ -14,31 +14,45 @@ final class ClipboardMonitor {
 
     private var timer: Timer?
     private var lastChangeCount: Int
-    private var lastActiveApp: NSRunningApplication?
+    private let ownBundleID = Bundle.main.bundleIdentifier
 
     init() {
         self.lastChangeCount = NSPasteboard.general.changeCount
     }
 
     func start() {
-        lastActiveApp = NSWorkspace.shared.frontmostApplication
-
-        NSWorkspace.shared.notificationCenter.addObserver(
-            forName: NSWorkspace.didActivateApplicationNotification,
-            object: nil,
-            queue: .main
-        ) { [weak self] notification in
-            guard let app = notification.userInfo?[NSWorkspace.applicationUserInfoKey] as? NSRunningApplication else { return }
-            DispatchQueue.main.async {
-                self?.lastActiveApp = app
-            }
-        }
-
-        timer = Timer.scheduledTimer(withTimeInterval: 0.5, repeats: true) { [weak self] _ in
+        timer = Timer.scheduledTimer(withTimeInterval: 0.3, repeats: true) { [weak self] _ in
             DispatchQueue.main.async {
                 self?.checkForChanges()
             }
         }
+    }
+
+    /// Finds the app owning the topmost on-screen window.
+    /// Uses CGWindowList to detect non-activating panels (e.g. iTerm quake window)
+    /// that don't register as frontmostApplication.
+    private var topmostWindowOwner: NSRunningApplication? {
+        guard let windowList = CGWindowListCopyWindowInfo(
+            [.optionOnScreenOnly, .excludeDesktopElements],
+            kCGNullWindowID
+        ) as? [[String: Any]] else {
+            return NSWorkspace.shared.frontmostApplication
+        }
+
+        for window in windowList {
+            guard let layer = window[kCGWindowLayer as String] as? Int,
+                  layer == 0,
+                  let pid = window[kCGWindowOwnerPID as String] as? pid_t else {
+                continue
+            }
+            let app = NSRunningApplication(processIdentifier: pid)
+            // Skip our own windows and background processes
+            if app?.bundleIdentifier == ownBundleID { continue }
+            if app?.activationPolicy != .regular && app?.activationPolicy != .accessory { continue }
+            return app
+        }
+
+        return NSWorkspace.shared.frontmostApplication
     }
 
     /// Called by PasteService to prevent self-capture after writing to the pasteboard
@@ -81,8 +95,8 @@ final class ClipboardMonitor {
         guard let items = pasteboard.pasteboardItems, let item = items.first else { return }
         let types = item.types
 
-        let sourceApp = lastActiveApp
-        let sourceBundleID = sourceApp?.bundleIdentifier
+        let source = topmostWindowOwner
+        let sourceBundleID = source?.bundleIdentifier
 
         guard !Self.shouldSkip(
             types: types,
@@ -98,7 +112,7 @@ final class ClipboardMonitor {
         let imageData = extractImageData(from: item)
         let richTextData = item.data(forType: .rtf)
 
-        let appName = sourceApp?.localizedName
+        let appName = source?.localizedName
 
         onClipboardChange?(
             contentType, plainText, urlString, filePaths,
