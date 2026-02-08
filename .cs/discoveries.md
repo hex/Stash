@@ -202,4 +202,5 @@
 - `SUFeedURL` in Info.plist points to appcast XML (e.g., raw GitHub URL)
 - `SUPublicEDKey` in Info.plist holds EdDSA public key (generated once via `./bin/generate_keys`)
 - xcodebuild + iOS device probing can block SPM resolution; use `-destination 'platform=macOS'` to avoid
+- Sparkle tools path in SPM: `DerivedData/Stash-*/SourcePackages/artifacts/sparkle/Sparkle/bin/` (generate_keys, sign_update, generate_appcast)
 
