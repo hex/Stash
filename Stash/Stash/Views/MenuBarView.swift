@@ -56,12 +56,13 @@ struct MenuBarView: View {
 
     private func entryList(_ entries: [ClipboardEntry]) -> some View {
         ScrollView {
-            LazyVStack(spacing: 4) {
-                ForEach(Array(entries.prefix(10)), id: \.persistentModelID) { entry in
+            LazyVStack(spacing: 0) {
+                let displayed = Array(entries.prefix(10))
+                ForEach(Array(displayed.enumerated()), id: \.element.persistentModelID) { index, entry in
                     let isCopied = copiedEntryID == entry.persistentModelID
                     let isHovered = hoveredEntryID == entry.persistentModelID
 
-                    EntryRowView(entry: entry, isSelected: false)
+                    EntryRowView(entry: entry)
                         .opacity(isCopied ? 0 : 1)
                         .overlay {
                             if isCopied {
@@ -105,9 +106,12 @@ struct MenuBarView: View {
                             }
                         }
                         .help(tooltipText(for: entry))
+
+                    if index < displayed.count - 1 {
+                        Divider()
+                    }
                 }
             }
-            .padding(.horizontal, 6)
             .padding(.vertical, 6)
         }
         .scrollIndicators(.automatic)
@@ -135,6 +139,7 @@ struct MenuBarView: View {
             ))
             .toggleStyle(.switch)
             .controlSize(.small)
+            .labelsHidden()
 
             Button {
                 isConfirmingQuit = true
