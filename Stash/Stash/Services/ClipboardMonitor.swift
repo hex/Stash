@@ -40,13 +40,14 @@ final class ClipboardMonitor {
         }
 
         for window in windowList {
-            guard let layer = window[kCGWindowLayer as String] as? Int,
-                  layer == 0,
-                  let pid = window[kCGWindowOwnerPID as String] as? pid_t else {
+            guard let pid = window[kCGWindowOwnerPID as String] as? pid_t,
+                  let bounds = window[kCGWindowBounds as String] as? [String: Any],
+                  let width = bounds["Width"] as? Int,
+                  let height = bounds["Height"] as? Int,
+                  width > 50, height > 50 else {
                 continue
             }
             let app = NSRunningApplication(processIdentifier: pid)
-            // Skip our own windows and background processes
             if app?.bundleIdentifier == ownBundleID { continue }
             if app?.activationPolicy != .regular && app?.activationPolicy != .accessory { continue }
             return app
