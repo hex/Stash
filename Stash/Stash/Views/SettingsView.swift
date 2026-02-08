@@ -9,6 +9,7 @@ struct SettingsView: View {
     @Bindable var preferences: Preferences
     var onExcludedAppsChanged: (() -> Void)?
     var onClearHistory: (() -> Void)?
+    var onCheckForUpdates: (() -> Void)?
 
     @State private var launchAtLogin = SMAppService.mainApp.status == .enabled
     @State private var isPickingApp = false
@@ -110,6 +111,10 @@ struct SettingsView: View {
                 Text("Clipboard history manager for macOS")
                     .font(.caption)
                     .foregroundStyle(.secondary)
+
+                Button("Check for Updates...") {
+                    onCheckForUpdates?()
+                }
 
                 Link("hexul.com", destination: URL(string: "https://hexul.com")!)
                     .font(.caption)

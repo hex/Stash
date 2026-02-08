@@ -23,6 +23,7 @@ final class AppController {
     let preferences: Preferences
     private let monitor: ClipboardMonitor
     private let pasteService: PasteService
+    private let updater: UpdaterController
     private var statusItem: NSStatusItem?
     private var popover: NSPopover?
     private var settingsWindow: NSWindow?
@@ -34,6 +35,7 @@ final class AppController {
         self.storage = StorageManager()
         self.monitor = ClipboardMonitor()
         self.pasteService = PasteService(monitor: monitor)
+        self.updater = UpdaterController()
 
         storage.historyLimit = preferences.historyLimit
         monitor.excludedBundleIDs = preferences.excludedBundleIDs
@@ -260,6 +262,9 @@ final class AppController {
             },
             onClearHistory: { [weak self] in
                 try? self?.storage.deleteAll()
+            },
+            onCheckForUpdates: { [weak self] in
+                self?.updater.checkForUpdates()
             }
         )
 

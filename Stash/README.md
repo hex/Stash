@@ -23,7 +23,7 @@ Built with Swift 6 (strict concurrency), SwiftUI, SwiftData, and AppKit. Require
 - **Source app detection** -- identifies the source app via window stacking order, handling non-activating panels like iTerm's quake window
 - **Right-click to pause** -- right-click the menu bar icon to toggle recording
 - **Launch at login** -- uses the modern `SMAppService` API
-- **No external dependencies** -- pure Apple frameworks (AppKit, SwiftUI, SwiftData, CryptoKit)
+- **Auto-update** -- checks for updates via Sparkle, with one-click install from GitHub Releases
 
 ## Install
 
@@ -138,7 +138,8 @@ Stash/
 │   └── Support/
 │       ├── CryptoService.swift     # AES-256-GCM encryption + Keychain key storage
 │       ├── Preferences.swift       # UserDefaults wrapper
-│       └── PasteboardConstants.swift
+│       ├── PasteboardConstants.swift
+│       └── UpdaterController.swift # Sparkle auto-update integration
 └── StashTests/                 # 84 tests across 7 files
     ├── Model/
     ├── Services/
@@ -165,6 +166,31 @@ Stash uses calendar versioning: **YYYY.M.PATCH**
 Examples: `2026.2.0`, `2026.2.1`, `2026.12.0`
 
 The build number (`CFBundleVersion`) is an incrementing integer independent of the version string.
+
+## Updates
+
+Stash uses [Sparkle](https://sparkle-project.org) for auto-updates, hosted via GitHub Releases.
+
+### Setup (one-time)
+
+Generate an EdDSA signing key:
+
+```sh
+# From the Sparkle SPM checkout (shown in Xcode's package cache)
+./bin/generate_keys
+```
+
+Copy the printed public key into `Info.plist` as the `SUPublicEDKey` value.
+
+### Publishing a release
+
+1. Archive and export with Developer ID signing
+2. Zip the `.app` bundle
+3. Sign the archive: `./bin/sign_update Stash.zip`
+4. Generate the appcast: `./bin/generate_appcast /path/to/updates/`
+5. Commit the updated `appcast.xml` and create a GitHub Release with the zip attached
+
+The app checks for updates every 24 hours automatically. Users can also trigger a check from Settings.
 
 ## License
 
