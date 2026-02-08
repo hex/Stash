@@ -14,12 +14,26 @@ final class ClipboardMonitor {
 
     private var timer: Timer?
     private var lastChangeCount: Int
+    private var lastActiveApp: NSRunningApplication?
 
     init() {
         self.lastChangeCount = NSPasteboard.general.changeCount
     }
 
     func start() {
+        lastActiveApp = NSWorkspace.shared.frontmostApplication
+
+        NSWorkspace.shared.notificationCenter.addObserver(
+            forName: NSWorkspace.didActivateApplicationNotification,
+            object: nil,
+            queue: .main
+        ) { [weak self] notification in
+            guard let app = notification.userInfo?[NSWorkspace.applicationUserInfoKey] as? NSRunningApplication else { return }
+            DispatchQueue.main.async {
+                self?.lastActiveApp = app
+            }
+        }
+
         timer = Timer.scheduledTimer(withTimeInterval: 0.5, repeats: true) { [weak self] _ in
             DispatchQueue.main.async {
                 self?.checkForChanges()
@@ -67,12 +81,13 @@ final class ClipboardMonitor {
         guard let items = pasteboard.pasteboardItems, let item = items.first else { return }
         let types = item.types
 
-        let frontmostBundleID = NSWorkspace.shared.frontmostApplication?.bundleIdentifier
+        let sourceApp = lastActiveApp
+        let sourceBundleID = sourceApp?.bundleIdentifier
 
         guard !Self.shouldSkip(
             types: types,
             excludedBundleIDs: excludedBundleIDs,
-            frontmostBundleID: frontmostBundleID
+            frontmostBundleID: sourceBundleID
         ) else { return }
 
         guard let contentType = ContentType.detect(from: types) else { return }
@@ -83,13 +98,12 @@ final class ClipboardMonitor {
         let imageData = extractImageData(from: item)
         let richTextData = item.data(forType: .rtf)
 
-        let frontmostApp = NSWorkspace.shared.frontmostApplication
-        let appName = frontmostApp?.localizedName
+        let appName = sourceApp?.localizedName
 
         onClipboardChange?(
             contentType, plainText, urlString, filePaths,
             imageData, richTextData,
-            frontmostBundleID, appName
+            sourceBundleID, appName
         )
     }
 

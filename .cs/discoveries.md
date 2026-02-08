@@ -6,6 +6,9 @@
 - beads issue tracker initialized with STASH prefix
 
 ## macOS Clipboard API Findings
+- NSPasteboard has no source attribution — doesn't tell you which app wrote to it
+- `frontmostApplication` at poll time is unreliable — focus may shift between copy and timer tick
+- Fix: observe `NSWorkspace.didActivateApplicationNotification` to track last active app continuously
 - NSPasteboard has no change notification - must poll via Timer checking `changeCount`
 - Password manager detection: check for `org.nspasteboard.ConcealedType` and `org.nspasteboard.TransientType` UTIs on pasteboard items
 - Additional privacy markers: `de.petermaurer.TransientPasteboardType`, `com.agilebits.onepassword`
