@@ -1,0 +1,20 @@
+<?xml version="1.0" standalone="yes"?>
+<rss xmlns:sparkle="http://www.andymatuschak.org/xml-namespaces/sparkle" xmlns:dc="http://purl.org/dc/elements/1.1/" version="2.0">
+    <channel>
+        <title>Stash</title>
+        <link>https://raw.githubusercontent.com/hex/Stash/main/appcast.xml</link>
+        <description>Stash clipboard history manager updates</description>
+        <language>en</language>
+        <item>
+            <title>Version 2026.2.0</title>
+            <pubDate>Sat, 08 Feb 2026 16:36:00 +0000</pubDate>
+            <sparkle:version>1</sparkle:version>
+            <sparkle:shortVersionString>2026.2.0</sparkle:shortVersionString>
+            <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
+            <enclosure url="https://github.com/hex/Stash/releases/download/v2026.2.0/Stash-2026.2.0.zip"
+                       length="4492441"
+                       type="application/octet-stream"
+                       sparkle:edSignature="NoegM8Q3kQC9Y+f0W1+4DRoaZgh2Rl/RRUdYQnm2WOJbgDZ8vgiV1sNT8ELNTJMt9ZpDGvzlW9cDuylEruNGDw==" />
+        </item>
+    </channel>
+</rss>
