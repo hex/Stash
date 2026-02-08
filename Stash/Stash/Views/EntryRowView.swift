@@ -7,10 +7,10 @@ struct EntryRowView: View {
     let entry: ClipboardEntry
 
     var body: some View {
-        HStack(spacing: 10) {
+        HStack(spacing: 12) {
             iconBadge
 
-            VStack(alignment: .leading, spacing: 3) {
+            VStack(alignment: .leading, spacing: 4) {
                 contentPreview
 
                 HStack(spacing: 6) {
@@ -41,11 +41,11 @@ struct EntryRowView: View {
             if entry.isPinned {
                 Image(systemName: "pin.fill")
                     .foregroundStyle(.red)
-                    .font(.caption2)
+                    .font(.caption)
             }
         }
-        .padding(.horizontal, 10)
-        .padding(.vertical, 7)
+        .padding(.horizontal, 12)
+        .padding(.vertical, 12)
     }
 
     // MARK: - Icon Badge
@@ -94,13 +94,13 @@ struct EntryRowView: View {
             } else {
                 Text("Image")
                     .lineLimit(1)
-                    .font(.body)
+                    .font(.system(size: 14))
                     .foregroundStyle(.purple)
             }
         default:
             Text(previewText)
                 .lineLimit(2)
-                .font(.body)
+                .font(.system(size: 14))
         }
     }
 
