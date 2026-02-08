@@ -40,6 +40,14 @@
 
 ## Install
 
+```sh
+brew install --cask hex/tap/stash
+```
+
+> Ad-hoc signed — on first launch, right-click the app and choose **Open** to bypass Gatekeeper.
+
+### Build from Source
+
 **Prerequisites:**
 
 | Requirement | Minimum |
@@ -47,8 +55,6 @@
 | macOS | 14.0 (Sonoma) |
 | Xcode | 16.0 |
 | XcodeGen | 2.38 |
-
-**Build:**
 
 ```sh
 brew install xcodegen     # if not installed
