@@ -16,6 +16,7 @@ struct EntryRowView: View {
                 HStack(spacing: 6) {
                     if let appName = entry.sourceAppName {
                         Text(appName)
+                            .fontWeight(.bold)
                             .foregroundStyle(.secondary)
                     }
                     Text(friendlyTimestamp)
@@ -93,13 +94,13 @@ struct EntryRowView: View {
             } else {
                 Text("Image")
                     .lineLimit(1)
-                    .font(.body.weight(.medium))
+                    .font(.body)
                     .foregroundStyle(.purple)
             }
         default:
             Text(previewText)
                 .lineLimit(2)
-                .font(.body.weight(.medium))
+                .font(.body)
         }
     }
 
