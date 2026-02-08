@@ -4,6 +4,17 @@
 .claude/
 CLAUDE.md
 
+# Secrets and credentials
+*.key
+*.pem
+*.p12
+*.p8
+*.cer
+.env
+
+# Build artifacts
+*.profraw
+
 # Transient files
 *.lock
 *.tmp
