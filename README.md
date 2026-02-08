@@ -1,8 +1,21 @@
-# <img src="stash-icon.png" width="48" align="top"> Stash
+<p align="center">
+  <img src="Stash/stash-icon.png" width="128" alt="Stash icon">
+</p>
 
-A lightweight macOS clipboard history manager that lives in your menu bar. Captures text, rich text, images, URLs, and file paths with zero dependencies.
+<h1 align="center">Stash</h1>
 
-Built with Swift 6 (strict concurrency), SwiftUI, SwiftData, and AppKit. Requires macOS 14+.
+<p align="center">
+  A lightweight macOS clipboard history manager that lives in your menu bar.<br>
+  Captures text, rich text, images, URLs, and file paths with zero dependencies.
+</p>
+
+<p align="center">
+  <img src="https://img.shields.io/badge/macOS-14%2B-blue" alt="macOS 14+">
+  <img src="https://img.shields.io/badge/Swift-6-orange" alt="Swift 6">
+  <img src="https://img.shields.io/badge/license-MIT-green" alt="MIT License">
+</p>
+
+---
 
 ## Features
 
