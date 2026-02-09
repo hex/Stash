@@ -184,31 +184,6 @@ Examples: `2026.2.0`, `2026.2.1`, `2026.12.0`
 
 The build number (`CFBundleVersion`) is an incrementing integer independent of the version string.
 
-## Updates
-
-Stash uses [Sparkle](https://sparkle-project.org) for auto-updates, hosted via GitHub Releases.
-
-### Setup (one-time)
-
-Generate an EdDSA signing key:
-
-```sh
-# From the Sparkle SPM checkout (shown in Xcode's package cache)
-./bin/generate_keys
-```
-
-Copy the printed public key into `Info.plist` as the `SUPublicEDKey` value.
-
-### Publishing a release
-
-1. Archive and export with Developer ID signing
-2. Zip the `.app` bundle
-3. Sign the archive: `./bin/sign_update Stash.zip`
-4. Generate the appcast: `./bin/generate_appcast /path/to/updates/`
-5. Commit the updated `appcast.xml` and create a GitHub Release with the zip attached
-
-The app checks for updates every 24 hours automatically. Users can also trigger a check from Settings.
-
 ## License
 
 MIT
