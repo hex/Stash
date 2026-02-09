@@ -3,6 +3,7 @@
 .beads/
 .claude/
 CLAUDE.md
+AGENTS.md
 
 # Secrets and credentials
 *.key
