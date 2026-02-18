@@ -3,6 +3,9 @@
 
 import SwiftUI
 import SwiftData
+import os.log
+
+private let logger = Logger(subsystem: "com.hexul.Stash", category: "debug")
 
 @main
 struct StashApp: App {
@@ -31,6 +34,7 @@ final class AppController {
     private var localClickMonitor: Any?
 
     init() {
+        logger.warning("AppController init() called")
         self.preferences = Preferences()
         self.storage = StorageManager()
         self.monitor = ClipboardMonitor()
@@ -61,10 +65,12 @@ final class AppController {
         }
 
         DispatchQueue.main.async { [self] in
+            logger.warning("AppController async init starting")
             self.setupStatusItem()
             self.monitor.start()
             self.deleteExpiredEntries()
             self.observeTermination()
+            logger.warning("AppController async init complete, monitor started")
         }
     }
 

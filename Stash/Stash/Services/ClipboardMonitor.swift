@@ -3,6 +3,9 @@
 
 import AppKit
 import Foundation
+import os.log
+
+private let monitorLog = Logger(subsystem: "com.hexul.Stash", category: "monitor")
 
 @MainActor
 final class ClipboardMonitor {
@@ -20,10 +23,18 @@ final class ClipboardMonitor {
         self.lastChangeCount = NSPasteboard.general.changeCount
     }
 
+    private var tickCount = 0
+
     func start() {
+        monitorLog.warning("ClipboardMonitor starting, initial changeCount=\(self.lastChangeCount)")
         timer = Timer.scheduledTimer(withTimeInterval: 0.3, repeats: true) { [weak self] _ in
             DispatchQueue.main.async {
-                self?.checkForChanges()
+                guard let self else { return }
+                self.tickCount += 1
+                if self.tickCount <= 3 {
+                    monitorLog.warning("Timer tick #\(self.tickCount), changeCount=\(NSPasteboard.general.changeCount)")
+                }
+                self.checkForChanges()
             }
         }
     }
@@ -108,6 +119,7 @@ final class ClipboardMonitor {
         let currentCount = pasteboard.changeCount
 
         guard currentCount != lastChangeCount else { return }
+        monitorLog.warning("clipboard changed \(self.lastChangeCount) -> \(currentCount), isPaused=\(self.isPaused)")
         lastChangeCount = currentCount
 
         guard !isPaused else { return }
