@@ -6,6 +6,17 @@
         <description>Stash clipboard history manager updates</description>
         <language>en</language>
         <item>
+            <title>Version 2026.4.1</title>
+            <pubDate>Mon, 27 Apr 2026 15:25:00 +0000</pubDate>
+            <sparkle:version>1</sparkle:version>
+            <sparkle:shortVersionString>2026.4.1</sparkle:shortVersionString>
+            <sparkle:minimumSystemVersion>15.0</sparkle:minimumSystemVersion>
+            <enclosure url="https://github.com/hex/Stash/releases/download/v2026.4.1/Stash-2026.4.1.zip"
+                       length="4593425"
+                       type="application/octet-stream"
+                       sparkle:edSignature="k8OfzabliinA6dw2giWOeOPLbQAU0uu7jHcXgK3YMj3L3k2/Cv0r+JIJr55Gsg1RKFloGx+R/G9QO+ZVFtktDw==" />
+        </item>
+        <item>
             <title>Version 2026.4.0</title>
             <pubDate>Mon, 27 Apr 2026 15:00:00 +0000</pubDate>
             <sparkle:version>1</sparkle:version>
