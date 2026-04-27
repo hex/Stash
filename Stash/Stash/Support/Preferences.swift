@@ -14,6 +14,7 @@ final class Preferences {
         static let isPaused = "isPaused"
         static let retentionDays = "retentionDays"
         static let clearOnQuit = "clearOnQuit"
+        static let appearance = "appearance"
     }
 
     private enum Limits {
@@ -102,7 +103,33 @@ final class Preferences {
         }
     }
 
+    /// Theme override: "auto" follows system, "light", or "dark".
+    var appearance: AppearanceOption {
+        get {
+            access(keyPath: \.appearance)
+            let raw = defaults.string(forKey: Keys.appearance) ?? AppearanceOption.auto.rawValue
+            return AppearanceOption(rawValue: raw) ?? .auto
+        }
+        set {
+            withMutation(keyPath: \.appearance) {
+                defaults.set(newValue.rawValue, forKey: Keys.appearance)
+            }
+        }
+    }
+
     init(defaults: UserDefaults = .standard) {
         self.defaults = defaults
+    }
+}
+
+enum AppearanceOption: String, CaseIterable, Identifiable {
+    case auto, light, dark
+    var id: String { rawValue }
+    var label: String {
+        switch self {
+        case .auto:  return "Auto"
+        case .light: return "Light"
+        case .dark:  return "Dark"
+        }
     }
 }

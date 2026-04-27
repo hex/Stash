@@ -141,15 +141,28 @@ final class ClipboardMonitor {
         let plainText = item.string(forType: .string)
         let urlString = item.string(forType: .URL) ?? extractURL(from: plainText)
         let filePaths = extractFilePaths(from: pasteboard)
-        let imageData = extractImageData(from: item)
+        let imageData = extractImageData(from: pasteboard, item: item)
         let richTextData = item.data(forType: .rtf)
 
-        let appName = source?.localizedName
+        let plainTextHasContent = plainText?.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty == false
+        let hasUsableContent = plainTextHasContent
+            || imageData != nil
+            || richTextData != nil
+            || (filePaths?.isEmpty == false)
+        guard hasUsableContent else { return }
+
+        var displayBundleID = sourceBundleID
+        var displayAppName = source?.localizedName
+
+        if contentType == .image, let writer = detectWriterApp(filePaths: filePaths) {
+            displayAppName = writer.name
+            if let bundleID = writer.bundleID { displayBundleID = bundleID }
+        }
 
         onClipboardChange?(
             contentType, plainText, urlString, filePaths,
             imageData, richTextData,
-            sourceBundleID, appName
+            displayBundleID, displayAppName
         )
     }
 
@@ -172,7 +185,59 @@ final class ClipboardMonitor {
         return urls.map(\.path)
     }
 
-    private func extractImageData(from item: NSPasteboardItem) -> Data? {
-        item.data(forType: .png) ?? item.data(forType: .tiff)
+    private func extractImageData(from pasteboard: NSPasteboard, item: NSPasteboardItem) -> Data? {
+        if let data = item.data(forType: .png) ?? item.data(forType: .tiff) {
+            return data
+        }
+        if let data = pasteboard.data(forType: .png) ?? pasteboard.data(forType: .tiff) {
+            return data
+        }
+        if let images = pasteboard.readObjects(forClasses: [NSImage.self], options: nil) as? [NSImage],
+           let image = images.first,
+           let tiffData = image.tiffRepresentation {
+            return tiffData
+        }
+        if let urls = pasteboard.readObjects(forClasses: [NSURL.self], options: [
+            .urlReadingFileURLsOnly: true
+        ]) as? [URL],
+           let url = urls.first,
+           Self.isLikelyImageFile(url),
+           let data = try? Data(contentsOf: url) {
+            return data
+        }
+        return nil
+    }
+
+    /// Identifies the writing app from file paths in `~/Library/Application Support/<AppName>/`.
+    /// Used to override topmost-window attribution for screenshot tools (CleanShot, Shottr, etc.)
+    /// that write to the pasteboard from background helper processes.
+    private func detectWriterApp(filePaths: [String]?) -> (name: String, bundleID: String?)? {
+        guard let paths = filePaths else { return nil }
+        let marker = "/Library/Application Support/"
+
+        for path in paths {
+            guard let range = path.range(of: marker) else { continue }
+            let after = path[range.upperBound...]
+            guard let slashIndex = after.firstIndex(of: "/") else { continue }
+            let appDir = String(after[..<slashIndex])
+            if appDir.isEmpty { continue }
+
+            for app in NSWorkspace.shared.runningApplications {
+                guard let name = app.localizedName else { continue }
+                if name == appDir || name.hasPrefix(appDir) || appDir.hasPrefix(name) {
+                    return (name, app.bundleIdentifier)
+                }
+            }
+
+            return (appDir, nil)
+        }
+        return nil
+    }
+
+    nonisolated static func isLikelyImageFile(_ url: URL) -> Bool {
+        let imageExtensions: Set<String> = [
+            "png", "jpg", "jpeg", "gif", "tiff", "tif", "webp", "heic", "heif", "bmp", "avif"
+        ]
+        return imageExtensions.contains(url.pathExtension.lowercased())
     }
 }

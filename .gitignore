@@ -1,6 +1,5 @@
 # Development session artifacts
 .cs/
-.beads/
 .claude/
 CLAUDE.md
 AGENTS.md

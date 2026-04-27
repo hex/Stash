@@ -4,8 +4,9 @@
 import CryptoKit
 import Foundation
 
-struct CryptoService {
+final class CryptoService {
     private let keychainService: String
+    private var cachedKey: SymmetricKey?
 
     init(keychainService: String = "com.hexul.Stash.encryption") {
         self.keychainService = keychainService
@@ -50,30 +51,33 @@ struct CryptoService {
     // MARK: - Key management
 
     func deleteKey() {
-        let query: [String: Any] = [
-            kSecClass as String: kSecClassGenericPassword,
-            kSecAttrService as String: keychainService,
-            kSecAttrAccount as String: "encryptionKey",
-        ]
-        SecItemDelete(query as CFDictionary)
+        SecItemDelete(baseQuery as CFDictionary)
+        cachedKey = nil
     }
 
     private func getOrCreateKey() throws -> SymmetricKey {
+        if let cachedKey { return cachedKey }
         if let existing = try loadKey() {
+            cachedKey = existing
             return existing
         }
         let key = SymmetricKey(size: .bits256)
         try saveKey(key)
+        cachedKey = key
         return key
     }
 
-    private func loadKey() throws -> SymmetricKey? {
-        let query: [String: Any] = [
+    private var baseQuery: [String: Any] {
+        [
             kSecClass as String: kSecClassGenericPassword,
             kSecAttrService as String: keychainService,
             kSecAttrAccount as String: "encryptionKey",
-            kSecReturnData as String: true,
         ]
+    }
+
+    private func loadKey() throws -> SymmetricKey? {
+        var query = baseQuery
+        query[kSecReturnData as String] = true
 
         var result: AnyObject?
         let status = SecItemCopyMatching(query as CFDictionary, &result)
@@ -91,13 +95,9 @@ struct CryptoService {
 
     private func saveKey(_ key: SymmetricKey) throws {
         let keyData = key.withUnsafeBytes { Data($0) }
-        let query: [String: Any] = [
-            kSecClass as String: kSecClassGenericPassword,
-            kSecAttrService as String: keychainService,
-            kSecAttrAccount as String: "encryptionKey",
-            kSecValueData as String: keyData,
-            kSecAttrAccessible as String: kSecAttrAccessibleWhenUnlockedThisDeviceOnly,
-        ]
+        var query = baseQuery
+        query[kSecValueData as String] = keyData
+        query[kSecAttrAccessible as String] = kSecAttrAccessibleWhenUnlockedThisDeviceOnly
 
         let status = SecItemAdd(query as CFDictionary, nil)
         guard status == errSecSuccess else {

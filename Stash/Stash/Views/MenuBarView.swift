@@ -1,5 +1,5 @@
-// ABOUTME: Menu bar popover content showing recent clipboard entries and controls.
-// ABOUTME: Live-updating SwiftUI view for .window style MenuBarExtra.
+// ABOUTME: Menu bar popover — Native + Quiet design, system fonts, system accent, no themed colors.
+// ABOUTME: Inherits the user's macOS preferences (light/dark, accent, contrast) without override.
 
 import SwiftUI
 import SwiftData
@@ -14,11 +14,14 @@ struct MenuBarView: View {
     @State private var copiedEntryID: PersistentIdentifier?
     @State private var hoveredEntryID: PersistentIdentifier?
     @State private var isConfirmingQuit = false
+    @State private var isConfirmingClear = false
+    @State private var scrollOffset: CGFloat = 0
+    @State private var contentHeight: CGFloat = 0
+    @State private var viewportHeight: CGFloat = 0
+    @State private var isScrolling = false
+    @State private var entries: [ClipboardEntry] = []
 
     var body: some View {
-        let _ = storage.changeCount
-        let entries = (try? storage.fetchAll()) ?? []
-
         VStack(spacing: 0) {
             if entries.isEmpty {
                 emptyState
@@ -28,19 +31,164 @@ struct MenuBarView: View {
 
             Divider()
 
-            controlBar
+            bottomToolbar
         }
-        .frame(width: 340, height: 400)
-        .background(.ultraThinMaterial)
+        .frame(width: 380, height: 400)
+        .background(
+            Color(NSColor(name: nil, dynamicProvider: { appearance in
+                appearance.bestMatch(from: [.aqua, .darkAqua]) == .darkAqua
+                    ? NSColor(red: 0.106, green: 0.115, blue: 0.149, alpha: 1) // #1B1D26
+                    : NSColor(red: 0.965, green: 0.969, blue: 0.976, alpha: 1) // #F6F7F9
+            }))
+        )
+        .preferredColorScheme(preferences.appearance == .auto ? nil
+                              : (preferences.appearance == .dark ? .dark : .light))
+        .confirmationDialog("Quit Stash?", isPresented: $isConfirmingQuit) {
+            Button("Quit", role: .destructive) {
+                NSApplication.shared.terminate(nil)
+            }
+            Button("Cancel", role: .cancel) {}
+        }
+        .confirmationDialog("Clear All History?", isPresented: $isConfirmingClear) {
+            Button("Clear All", role: .destructive) {
+                try? storage.deleteAll()
+            }
+            Button("Cancel", role: .cancel) {}
+        } message: {
+            Text("This will permanently delete every entry, including pinned items.")
+        }
+        .onAppear {
+            isConfirmingQuit = false
+            isConfirmingClear = false
+        }
+        .task(id: storage.changeCount) {
+            entries = (try? storage.fetchAll()) ?? []
+        }
     }
 
-    // MARK: - Empty State
+    // MARK: - Bottom Toolbar
+
+    private var bottomToolbar: some View {
+        HStack(spacing: 12) {
+            Button {
+                onOpenSettings()
+            } label: {
+                Image(systemName: "gearshape")
+                    .font(.system(size: 14, weight: .regular))
+                    .foregroundStyle(.secondary)
+            }
+            .buttonStyle(.plain)
+            .help("Settings")
+
+            Spacer()
+
+            Toggle(preferences.isPaused ? "Paused" : "Recording", isOn: Binding(
+                get: { !preferences.isPaused },
+                set: { onPauseChanged(!$0) }
+            ))
+            .toggleStyle(.switch)
+            .controlSize(.small)
+            .font(.caption)
+            .foregroundStyle(.secondary)
+            .tint(.blue)
+            .help(preferences.isPaused ? "Paused — toggle to resume" : "Recording — toggle to pause")
+
+            Button {
+                isConfirmingQuit = true
+            } label: {
+                Image(systemName: "power")
+                    .font(.system(size: 14, weight: .medium))
+                    .foregroundStyle(Color(red: 1.0, green: 0.34, blue: 0.34))
+            }
+            .buttonStyle(.plain)
+            .help("Quit Stash")
+            .contextMenu {
+                Button("Clear All History", role: .destructive) {
+                    isConfirmingClear = true
+                }
+            }
+        }
+        .padding(.horizontal, 12)
+        .padding(.vertical, 8)
+    }
+
+    // MARK: - Header
+
+    private var header: some View {
+        HStack(spacing: 8) {
+            Text("Stash")
+                .font(.headline)
+                .foregroundStyle(.primary)
+
+            Spacer()
+
+            statusIndicator
+
+            overflowMenu
+        }
+        .padding(.horizontal, 16)
+        .padding(.top, 12)
+        .padding(.bottom, 10)
+    }
+
+    private var statusIndicator: some View {
+        Image(systemName: preferences.isPaused
+              ? "dot.radiowaves.left.and.right.slash"
+              : "dot.radiowaves.left.and.right")
+            .font(.system(size: 12, weight: .medium))
+            .foregroundStyle(preferences.isPaused ? Color.secondary : Color.accentColor)
+            .symbolEffect(.pulse, options: .repeating, isActive: !preferences.isPaused)
+            .help(preferences.isPaused ? "Paused — open the menu to resume" : "Recording")
+    }
+
+    private var overflowMenu: some View {
+        Menu {
+            Button(preferences.isPaused ? "Resume Recording" : "Pause Recording") {
+                onPauseChanged(!preferences.isPaused)
+            }
+            Divider()
+            Button("Settings…") {
+                onOpenSettings()
+            }
+            Divider()
+            Button("Clear All History", role: .destructive) {
+                isConfirmingClear = true
+            }
+            Button("Quit Stash") {
+                isConfirmingQuit = true
+            }
+        } label: {
+            Image(systemName: "ellipsis")
+                .font(.system(size: 13, weight: .medium))
+                .foregroundStyle(.secondary)
+                .frame(width: 18, height: 18)
+        }
+        .menuStyle(.borderlessButton)
+        .menuIndicator(.hidden)
+        .fixedSize()
+        .confirmationDialog("Quit Stash?", isPresented: $isConfirmingQuit) {
+            Button("Quit", role: .destructive) {
+                NSApplication.shared.terminate(nil)
+            }
+            Button("Cancel", role: .cancel) {}
+        }
+        .confirmationDialog("Clear All History?", isPresented: $isConfirmingClear) {
+            Button("Clear All", role: .destructive) {
+                try? storage.deleteAll()
+            }
+            Button("Cancel", role: .cancel) {}
+        } message: {
+            Text("This will permanently delete every entry, including pinned items.")
+        }
+    }
+
+    // MARK: - Empty state
 
     private var emptyState: some View {
         VStack(spacing: 8) {
             Spacer()
-            Image(systemName: "clipboard")
-                .font(.system(size: 32))
+            Image(systemName: "tray")
+                .font(.system(size: 26, weight: .light))
                 .foregroundStyle(.tertiary)
             Text("No clipboard history")
                 .font(.body)
@@ -50,113 +198,81 @@ struct MenuBarView: View {
                 .foregroundStyle(.tertiary)
             Spacer()
         }
+        .frame(maxWidth: .infinity)
     }
 
-    // MARK: - Entry List
+    // MARK: - Entry list
 
     private func entryList(_ entries: [ClipboardEntry]) -> some View {
         ScrollView {
             LazyVStack(spacing: 0) {
                 let displayed = Array(entries.prefix(10))
                 ForEach(Array(displayed.enumerated()), id: \.element.persistentModelID) { index, entry in
-                    let isCopied = copiedEntryID == entry.persistentModelID
-                    let isHovered = hoveredEntryID == entry.persistentModelID
-
-                    EntryRowView(entry: entry)
-                        .opacity(isCopied ? 0 : 1)
-                        .overlay {
-                            if isCopied {
-                                HStack(spacing: 6) {
-                                    Image(systemName: "checkmark.circle.fill")
-                                        .foregroundStyle(.green)
-                                    Text("Copied")
-                                        .font(.body.weight(.medium))
-                                        .foregroundStyle(.green)
-                                }
-                            }
+                    EntryRowView(
+                        entry: entry,
+                        isTopmost: index == 0,
+                        isHovered: hoveredEntryID == entry.persistentModelID,
+                        isCopied: copiedEntryID == entry.persistentModelID,
+                        action: actionFor(entry)
+                    )
+                    .contentShape(Rectangle())
+                    .onTapGesture { copyEntry(entry) }
+                    .onHover { hovering in
+                        hoveredEntryID = hovering ? entry.persistentModelID : nil
+                    }
+                    .contextMenu {
+                        Button("Copy") { copyEntry(entry) }
+                        Button(entry.isPinned ? "Unpin" : "Pin") {
+                            try? storage.togglePin(entryWithID: entry.persistentModelID)
                         }
-                        .background(
-                            RoundedRectangle(cornerRadius: 6)
-                                .fill(
-                                    isCopied ? Color.green.opacity(0.12) :
-                                    isHovered ? Color.accentColor.opacity(0.15) :
-                                    Color.clear
-                                )
-                        )
-                        .contentShape(Rectangle())
-                        .onTapGesture { copyEntry(entry) }
-                        .onHover { hovering in
-                            hoveredEntryID = hovering ? entry.persistentModelID : nil
+                        if let action = actionFor(entry) {
+                            Button(action.label) { action.perform() }
                         }
-                        .contextMenu {
-                            Button("Copy") { copyEntry(entry) }
-
-                            Button(entry.isPinned ? "Unpin" : "Pin") {
-                                try? storage.togglePin(entryWithID: entry.persistentModelID)
-                            }
-
-                            if entry.contentType == .image, entry.imageData != nil {
-                                Button("Preview") { previewImage(entry) }
-                            }
-
-                            Divider()
-
-                            Button("Delete", role: .destructive) {
-                                try? storage.delete(entryWithID: entry.persistentModelID)
-                            }
+                        Divider()
+                        Button("Delete", role: .destructive) {
+                            try? storage.delete(entryWithID: entry.persistentModelID)
                         }
-                        .help(tooltipText(for: entry))
+                    }
 
                     if index < displayed.count - 1 {
                         Divider()
                     }
                 }
             }
-            .padding(.vertical, 6)
+            .padding(.vertical, 8)
         }
-        .scrollIndicators(.automatic)
-        .contentMargins(.vertical, 6, for: .scrollIndicators)
+        .scrollIndicators(.never)
+        .onScrollGeometryChange(for: ScrollGeometry.self) { $0 } action: { _, geo in
+            scrollOffset = geo.contentOffset.y
+            contentHeight = geo.contentSize.height
+            viewportHeight = geo.bounds.height
+        }
+        .onScrollPhaseChange { _, newPhase in
+            isScrolling = newPhase != .idle
+        }
+        .overlay(alignment: .topTrailing) {
+            customScrollIndicator
+        }
     }
 
-    // MARK: - Controls
+    @ViewBuilder
+    private var customScrollIndicator: some View {
+        let needsScroll = contentHeight > viewportHeight + 1
+        let viewportRatio = min(max(viewportHeight / max(contentHeight, 1), 0.1), 1.0)
+        let indicatorHeight = max(viewportHeight * viewportRatio, 24)
+        let trackRange = max(viewportHeight - indicatorHeight, 0)
+        let scrollableRange = max(contentHeight - viewportHeight, 1)
+        let progress = min(max(scrollOffset / scrollableRange, 0), 1)
+        let yOffset = progress * trackRange
 
-    private var controlBar: some View {
-        HStack(spacing: 12) {
-            Button {
-                onOpenSettings()
-            } label: {
-                Image(systemName: "gear")
-                    .foregroundStyle(.secondary)
-            }
-            .buttonStyle(.plain)
-            .help("Settings")
-
-            Spacer()
-
-            Toggle("Pause", isOn: Binding(
-                get: { preferences.isPaused },
-                set: { onPauseChanged($0) }
-            ))
-            .toggleStyle(.switch)
-            .controlSize(.small)
-            .labelsHidden()
-
-            Button {
-                isConfirmingQuit = true
-            } label: {
-                Image(systemName: "power")
-                    .foregroundStyle(.red)
-            }
-            .buttonStyle(.plain)
-            .help("Quit Stash")
-            .confirmationDialog("Quit Stash?", isPresented: $isConfirmingQuit) {
-                Button("Quit", role: .destructive) {
-                    NSApplication.shared.terminate(nil)
-                }
-            }
-        }
-        .padding(.horizontal, 12)
-        .padding(.vertical, 10)
+        Capsule()
+            .fill(.primary.opacity(0.30))
+            .frame(width: 3, height: indicatorHeight)
+            .padding(.trailing, 3)
+            .offset(y: yOffset)
+            .opacity(needsScroll && isScrolling ? 1 : 0)
+            .animation(.easeOut(duration: 0.4), value: isScrolling)
+            .allowsHitTesting(false)
     }
 
     // MARK: - Actions
@@ -173,20 +289,29 @@ struct MenuBarView: View {
         }
     }
 
-    private func previewImage(_ entry: ClipboardEntry) {
-        guard let data = entry.imageData else { return }
-        let url = FileManager.default.temporaryDirectory.appendingPathComponent("stash-preview.png")
-        try? data.write(to: url)
-        NSWorkspace.shared.open(url)
-    }
-
-    private func tooltipText(for entry: ClipboardEntry) -> String {
+    private func actionFor(_ entry: ClipboardEntry) -> EntryRowView.Action? {
         switch entry.contentType {
-        case .image: return "Image (\(entry.sourceAppName ?? "Unknown"))"
+        case .image:
+            guard let data = entry.imageData else { return nil }
+            return EntryRowView.Action(label: "Preview", systemImage: "eye") {
+                let url = FileManager.default.temporaryDirectory.appendingPathComponent("stash-preview.png")
+                try? data.write(to: url)
+                NSWorkspace.shared.open(url)
+            }
         case .fileURL:
-            return entry.filePaths?.joined(separator: "\n") ?? "[File]"
+            guard let path = entry.filePaths?.first,
+                  FileManager.default.fileExists(atPath: path) else { return nil }
+            return EntryRowView.Action(label: "Preview", systemImage: "eye") {
+                NSWorkspace.shared.open(URL(fileURLWithPath: path))
+            }
+        case .url:
+            guard let urlString = entry.urlString,
+                  let url = URL(string: urlString) else { return nil }
+            return EntryRowView.Action(label: "Open", systemImage: "arrow.up.right.square") {
+                NSWorkspace.shared.open(url)
+            }
         default:
-            return String((entry.plainText ?? "").prefix(500))
+            return nil
         }
     }
 }

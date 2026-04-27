@@ -34,6 +34,13 @@ struct SettingsView: View {
                         .foregroundStyle(.secondary)
                 }
 
+                Picker("Appearance:", selection: $preferences.appearance) {
+                    ForEach(AppearanceOption.allCases) { option in
+                        Text(option.label).tag(option)
+                    }
+                }
+                .pickerStyle(.segmented)
+
                 Toggle("Launch at login", isOn: $launchAtLogin)
                     .onChange(of: launchAtLogin) { _, newValue in
                         do {

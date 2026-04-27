@@ -16,7 +16,7 @@ final class StorageManager {
 
     init(inMemory: Bool = false, crypto: CryptoService = CryptoService()) {
         let schema = Schema([ClipboardEntry.self])
-        let config = ModelConfiguration(isStoredInMemoryOnly: inMemory)
+        let config = ModelConfiguration("Stash", schema: schema, isStoredInMemoryOnly: inMemory)
         self.container = try! ModelContainer(for: schema, configurations: [config])
         self.context = ModelContext(container)
         self.crypto = crypto
