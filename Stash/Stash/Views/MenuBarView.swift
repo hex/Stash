@@ -13,8 +13,6 @@ struct MenuBarView: View {
 
     @State private var copiedEntryID: PersistentIdentifier?
     @State private var hoveredEntryID: PersistentIdentifier?
-    @State private var isConfirmingQuit = false
-    @State private var isConfirmingClear = false
     @State private var scrollOffset: CGFloat = 0
     @State private var contentHeight: CGFloat = 0
     @State private var viewportHeight: CGFloat = 0
@@ -43,24 +41,6 @@ struct MenuBarView: View {
         )
         .preferredColorScheme(preferences.appearance == .auto ? nil
                               : (preferences.appearance == .dark ? .dark : .light))
-        .confirmationDialog("Quit Stash?", isPresented: $isConfirmingQuit) {
-            Button("Quit", role: .destructive) {
-                NSApplication.shared.terminate(nil)
-            }
-            Button("Cancel", role: .cancel) {}
-        }
-        .confirmationDialog("Clear All History?", isPresented: $isConfirmingClear) {
-            Button("Clear All", role: .destructive) {
-                try? storage.deleteAll()
-            }
-            Button("Cancel", role: .cancel) {}
-        } message: {
-            Text("This will permanently delete every entry, including pinned items.")
-        }
-        .onAppear {
-            isConfirmingQuit = false
-            isConfirmingClear = false
-        }
         .task(id: storage.changeCount) {
             entries = (try? storage.fetchAll()) ?? []
         }
@@ -94,7 +74,7 @@ struct MenuBarView: View {
             .help(preferences.isPaused ? "Paused — toggle to resume" : "Recording — toggle to pause")
 
             Button {
-                isConfirmingQuit = true
+                confirmAndQuit()
             } label: {
                 Image(systemName: "power")
                     .font(.system(size: 14, weight: .medium))
@@ -104,82 +84,12 @@ struct MenuBarView: View {
             .help("Quit Stash")
             .contextMenu {
                 Button("Clear All History", role: .destructive) {
-                    isConfirmingClear = true
+                    confirmAndClear()
                 }
             }
         }
         .padding(.horizontal, 12)
         .padding(.vertical, 8)
-    }
-
-    // MARK: - Header
-
-    private var header: some View {
-        HStack(spacing: 8) {
-            Text("Stash")
-                .font(.headline)
-                .foregroundStyle(.primary)
-
-            Spacer()
-
-            statusIndicator
-
-            overflowMenu
-        }
-        .padding(.horizontal, 16)
-        .padding(.top, 12)
-        .padding(.bottom, 10)
-    }
-
-    private var statusIndicator: some View {
-        Image(systemName: preferences.isPaused
-              ? "dot.radiowaves.left.and.right.slash"
-              : "dot.radiowaves.left.and.right")
-            .font(.system(size: 12, weight: .medium))
-            .foregroundStyle(preferences.isPaused ? Color.secondary : Color.accentColor)
-            .symbolEffect(.pulse, options: .repeating, isActive: !preferences.isPaused)
-            .help(preferences.isPaused ? "Paused — open the menu to resume" : "Recording")
-    }
-
-    private var overflowMenu: some View {
-        Menu {
-            Button(preferences.isPaused ? "Resume Recording" : "Pause Recording") {
-                onPauseChanged(!preferences.isPaused)
-            }
-            Divider()
-            Button("Settings…") {
-                onOpenSettings()
-            }
-            Divider()
-            Button("Clear All History", role: .destructive) {
-                isConfirmingClear = true
-            }
-            Button("Quit Stash") {
-                isConfirmingQuit = true
-            }
-        } label: {
-            Image(systemName: "ellipsis")
-                .font(.system(size: 13, weight: .medium))
-                .foregroundStyle(.secondary)
-                .frame(width: 18, height: 18)
-        }
-        .menuStyle(.borderlessButton)
-        .menuIndicator(.hidden)
-        .fixedSize()
-        .confirmationDialog("Quit Stash?", isPresented: $isConfirmingQuit) {
-            Button("Quit", role: .destructive) {
-                NSApplication.shared.terminate(nil)
-            }
-            Button("Cancel", role: .cancel) {}
-        }
-        .confirmationDialog("Clear All History?", isPresented: $isConfirmingClear) {
-            Button("Clear All", role: .destructive) {
-                try? storage.deleteAll()
-            }
-            Button("Cancel", role: .cancel) {}
-        } message: {
-            Text("This will permanently delete every entry, including pinned items.")
-        }
     }
 
     // MARK: - Empty state
@@ -312,6 +222,34 @@ struct MenuBarView: View {
             }
         default:
             return nil
+        }
+    }
+
+    // MARK: - Modal confirmations (NSAlert bypasses SwiftUI dialog wedging in popovers)
+
+    private func confirmAndQuit() {
+        let alert = NSAlert()
+        alert.messageText = "Quit Stash?"
+        alert.addButton(withTitle: "Quit").hasDestructiveAction = true
+        alert.addButton(withTitle: "Cancel")
+        alert.alertStyle = .warning
+        if alert.runModal() == .alertFirstButtonReturn {
+            if preferences.clearOnQuit {
+                try? storage.deleteAll()
+            }
+            NSApp.terminate(nil)
+        }
+    }
+
+    private func confirmAndClear() {
+        let alert = NSAlert()
+        alert.messageText = "Clear All History?"
+        alert.informativeText = "This will permanently delete every entry, including pinned items."
+        alert.addButton(withTitle: "Clear All").hasDestructiveAction = true
+        alert.addButton(withTitle: "Cancel")
+        alert.alertStyle = .warning
+        if alert.runModal() == .alertFirstButtonReturn {
+            try? storage.deleteAll()
         }
     }
 }

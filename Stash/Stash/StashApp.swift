@@ -135,13 +135,20 @@ final class AppController {
 
     private func addClickMonitors() {
         globalClickMonitor = NSEvent.addGlobalMonitorForEvents(matching: [.leftMouseDown, .rightMouseDown]) { [weak self] _ in
+            // Don't close the popover while a modal dialog (confirm/alert) is being presented.
+            guard NSApp.modalWindow == nil else { return }
             DispatchQueue.main.async { self?.closePopover() }
         }
         localClickMonitor = NSEvent.addLocalMonitorForEvents(matching: [.leftMouseDown, .rightMouseDown]) { [weak self] event in
             guard let self, let popover = self.popover, popover.isShown else { return event }
-            // If the click is inside the popover window, let it through
-            if let popoverWindow = popover.contentViewController?.view.window,
-               event.window == popoverWindow {
+            let popoverWindow = popover.contentViewController?.view.window
+            // Let clicks through if they're inside the popover, or inside a window that's a
+            // child of the popover (e.g. confirmationDialog presents a child window),
+            // or while any modal panel is being presented.
+            if let win = event.window,
+               win == popoverWindow
+               || win.parent == popoverWindow
+               || NSApp.modalWindow != nil {
                 return event
             }
             DispatchQueue.main.async { self.closePopover() }
