@@ -224,7 +224,7 @@ final class AppController {
 
     // MARK: - Services
 
-    func paste(_ entry: ClipboardEntry) {
+    func paste(_ entry: ClipboardItem) {
         pasteService.paste(entry)
         animateStatusIcon()
     }

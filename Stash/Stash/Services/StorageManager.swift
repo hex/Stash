@@ -78,8 +78,10 @@ final class StorageManager {
         return entry
     }
 
-    func fetchAll() throws -> [ClipboardEntry] {
-        // Use a separate read context so decrypted values are never saved back
+    func fetchAll() throws -> [ClipboardItem] {
+        // Decrypt in a throwaway read context, then return value-type snapshots.
+        // The managed objects and their context deallocate when this returns, so
+        // views hold no reference back into SwiftData's object graph.
         let readContext = ModelContext(container)
         var descriptor = FetchDescriptor<ClipboardEntry>(
             sortBy: [SortDescriptor(\.timestamp, order: .reverse)]
@@ -87,15 +89,14 @@ final class StorageManager {
         descriptor.fetchLimit = historyLimit
         let entries = try readContext.fetch(descriptor)
 
-        for entry in entries {
+        return entries.map { entry in
             entry.plainText = decryptString(entry.plainText)
             entry.urlString = decryptString(entry.urlString)
             entry.filePathsJSON = decryptString(entry.filePathsJSON)
             entry.imageData = decryptData(entry.imageData)
             entry.richTextData = decryptData(entry.richTextData)
+            return ClipboardItem(entry)
         }
-
-        return entries
     }
 
     func delete(entryWithID id: PersistentIdentifier) throws {

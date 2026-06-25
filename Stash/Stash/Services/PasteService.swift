@@ -13,7 +13,7 @@ final class PasteService {
         self.monitor = monitor
     }
 
-    func paste(_ entry: ClipboardEntry) {
+    func paste(_ entry: ClipboardItem) {
         pasteboard.clearContents()
 
         switch entry.contentType {
