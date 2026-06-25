@@ -253,4 +253,34 @@ final class StorageManagerTests: XCTestCase {
 
         XCTAssertNil(second, "Dedup should work even though stored content is encrypted")
     }
+
+    // MARK: - Snapshot detachment
+
+    /// fetchAll must return value-type snapshots, not live managed objects.
+    /// Managed objects strongly reference their ModelContext; handing them to a
+    /// long-lived view pins the context's entire object graph and leaks memory.
+    func testFetchAllReturnsDetachedValueSnapshots() throws {
+        let saved = try XCTUnwrap(try storage.save(
+            contentType: .image,
+            plainText: "caption",
+            imageData: Data([0xDE, 0xAD, 0xBE, 0xEF]),
+            sourceAppBundleID: "com.test",
+            sourceAppName: "Test"
+        ))
+
+        let items: [ClipboardItem] = try storage.fetchAll()
+        let item = try XCTUnwrap(items.first)
+
+        // Carries the persistent id so delete/pin/paste can target the entry
+        XCTAssertEqual(item.id, saved.persistentModelID)
+        // Carries decrypted content for both display and re-paste
+        XCTAssertEqual(item.contentType, .image)
+        XCTAssertEqual(item.plainText, "caption")
+        XCTAssertEqual(item.imageData, Data([0xDE, 0xAD, 0xBE, 0xEF]))
+
+        // Value semantics: the snapshot stays intact after its backing entry is gone
+        try storage.delete(entryWithID: item.id)
+        XCTAssertTrue(try storage.fetchAll().isEmpty)
+        XCTAssertEqual(item.plainText, "caption", "Snapshot must survive deletion of its entry")
+    }
 }

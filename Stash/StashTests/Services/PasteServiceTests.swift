@@ -37,7 +37,7 @@ final class PasteServiceTests: XCTestCase {
             sourceAppBundleID: nil,
             sourceAppName: nil
         )
-        pasteService.paste(entry)
+        pasteService.paste(ClipboardItem(entry))
 
         XCTAssertEqual(pasteboard.string(forType: .string), "Hello, world!")
     }
@@ -52,7 +52,7 @@ final class PasteServiceTests: XCTestCase {
             sourceAppBundleID: nil,
             sourceAppName: nil
         )
-        pasteService.paste(entry)
+        pasteService.paste(ClipboardItem(entry))
 
         XCTAssertEqual(pasteboard.string(forType: .string), "https://example.com")
     }
@@ -67,7 +67,7 @@ final class PasteServiceTests: XCTestCase {
             sourceAppBundleID: nil,
             sourceAppName: nil
         )
-        pasteService.paste(entry)
+        pasteService.paste(ClipboardItem(entry))
 
         XCTAssertNotNil(pasteboard.data(forType: .png))
     }
@@ -83,7 +83,7 @@ final class PasteServiceTests: XCTestCase {
             sourceAppBundleID: nil,
             sourceAppName: nil
         )
-        pasteService.paste(entry)
+        pasteService.paste(ClipboardItem(entry))
 
         XCTAssertNotNil(pasteboard.data(forType: .rtf), "RTF data should be on pasteboard")
         XCTAssertEqual(pasteboard.string(forType: .string), "Hello", "Plain text fallback should be present")
@@ -100,7 +100,7 @@ final class PasteServiceTests: XCTestCase {
             sourceAppBundleID: nil,
             sourceAppName: nil
         )
-        pasteService.paste(entry)
+        pasteService.paste(ClipboardItem(entry))
 
         let pastedString = pasteboard.string(forType: .string)
         XCTAssertEqual(pastedString, "/tmp/test.txt")
@@ -116,7 +116,7 @@ final class PasteServiceTests: XCTestCase {
             sourceAppBundleID: nil,
             sourceAppName: nil
         )
-        pasteService.paste(entry)
+        pasteService.paste(ClipboardItem(entry))
 
         XCTAssertGreaterThan(pasteboard.changeCount, beforeCount)
     }

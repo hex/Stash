@@ -7,7 +7,7 @@ import SwiftData
 struct MenuBarView: View {
     let storage: StorageManager
     let preferences: Preferences
-    let onPaste: (ClipboardEntry) -> Void
+    let onPaste: (ClipboardItem) -> Void
     let onPauseChanged: (Bool) -> Void
     let onOpenSettings: () -> Void
 
@@ -17,7 +17,7 @@ struct MenuBarView: View {
     @State private var contentHeight: CGFloat = 0
     @State private var viewportHeight: CGFloat = 0
     @State private var isScrolling = false
-    @State private var entries: [ClipboardEntry] = []
+    @State private var entries: [ClipboardItem] = []
 
     var body: some View {
         VStack(spacing: 0) {
@@ -113,34 +113,34 @@ struct MenuBarView: View {
 
     // MARK: - Entry list
 
-    private func entryList(_ entries: [ClipboardEntry]) -> some View {
+    private func entryList(_ entries: [ClipboardItem]) -> some View {
         ScrollView {
             LazyVStack(spacing: 0) {
                 let displayed = Array(entries.prefix(10))
-                ForEach(Array(displayed.enumerated()), id: \.element.persistentModelID) { index, entry in
+                ForEach(Array(displayed.enumerated()), id: \.element.id) { index, entry in
                     EntryRowView(
                         entry: entry,
                         isTopmost: index == 0,
-                        isHovered: hoveredEntryID == entry.persistentModelID,
-                        isCopied: copiedEntryID == entry.persistentModelID,
+                        isHovered: hoveredEntryID == entry.id,
+                        isCopied: copiedEntryID == entry.id,
                         action: actionFor(entry)
                     )
                     .contentShape(Rectangle())
                     .onTapGesture { copyEntry(entry) }
                     .onHover { hovering in
-                        hoveredEntryID = hovering ? entry.persistentModelID : nil
+                        hoveredEntryID = hovering ? entry.id : nil
                     }
                     .contextMenu {
                         Button("Copy") { copyEntry(entry) }
                         Button(entry.isPinned ? "Unpin" : "Pin") {
-                            try? storage.togglePin(entryWithID: entry.persistentModelID)
+                            try? storage.togglePin(entryWithID: entry.id)
                         }
                         if let action = actionFor(entry) {
                             Button(action.label) { action.perform() }
                         }
                         Divider()
                         Button("Delete", role: .destructive) {
-                            try? storage.delete(entryWithID: entry.persistentModelID)
+                            try? storage.delete(entryWithID: entry.id)
                         }
                     }
 
@@ -187,10 +187,10 @@ struct MenuBarView: View {
 
     // MARK: - Actions
 
-    private func copyEntry(_ entry: ClipboardEntry) {
+    private func copyEntry(_ entry: ClipboardItem) {
         onPaste(entry)
         withAnimation(.easeIn(duration: 0.15)) {
-            copiedEntryID = entry.persistentModelID
+            copiedEntryID = entry.id
         }
         DispatchQueue.main.asyncAfter(deadline: .now() + 1.2) {
             withAnimation(.easeOut(duration: 0.2)) {
@@ -199,7 +199,7 @@ struct MenuBarView: View {
         }
     }
 
-    private func actionFor(_ entry: ClipboardEntry) -> EntryRowView.Action? {
+    private func actionFor(_ entry: ClipboardItem) -> EntryRowView.Action? {
         switch entry.contentType {
         case .image:
             guard let data = entry.imageData else { return nil }

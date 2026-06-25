@@ -10,7 +10,7 @@ struct EntryRowView: View {
         let perform: () -> Void
     }
 
-    let entry: ClipboardEntry
+    let entry: ClipboardItem
     let isTopmost: Bool
     let isHovered: Bool
     let isCopied: Bool
@@ -41,7 +41,7 @@ struct EntryRowView: View {
                 RoundedRectangle(cornerRadius: 6, style: .continuous)
                     .fill(rowFill)
             )
-            .task(id: entry.persistentModelID) {
+            .task(id: entry.id) {
                 await loadThumbnail()
             }
     }
