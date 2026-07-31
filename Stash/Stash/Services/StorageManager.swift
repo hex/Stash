@@ -14,14 +14,21 @@ final class StorageManager {
     /// Incremented on every mutation so SwiftUI views re-evaluate when data changes.
     private(set) var changeCount: Int = 0
 
-    init(inMemory: Bool = false, crypto: CryptoService = CryptoService()) {
+    /// `storeURL` points the container at a specific SQLite file. Tests use it to reach
+    /// the `.externalStorage` path, which an in-memory container never engages.
+    init(inMemory: Bool = false, storeURL: URL? = nil, crypto: CryptoService = CryptoService()) {
         let schema = Schema([ClipboardEntry.self])
-        let config = ModelConfiguration("Stash", schema: schema, isStoredInMemoryOnly: inMemory)
+        let config: ModelConfiguration
+        if let storeURL {
+            config = ModelConfiguration(schema: schema, url: storeURL)
+        } else {
+            config = ModelConfiguration("Stash", schema: schema, isStoredInMemoryOnly: inMemory)
+        }
         self.container = try! ModelContainer(for: schema, configurations: [config])
         self.context = ModelContext(container)
         self.crypto = crypto
 
-        if !inMemory {
+        if !inMemory && storeURL == nil {
             excludeStoreFromTimeMachine()
         }
     }
@@ -79,9 +86,11 @@ final class StorageManager {
     }
 
     func fetchAll() throws -> [ClipboardItem] {
-        // Decrypt in a throwaway read context, then return value-type snapshots.
-        // The managed objects and their context deallocate when this returns, so
-        // views hold no reference back into SwiftData's object graph.
+        // Read in a throwaway context and return value-type snapshots. The image and
+        // rich-text columns are never touched, so external-storage blobs stay faulted
+        // and never enter memory; callers reach them via imageData(for:) and
+        // richTextData(for:). Decryption goes into locals rather than back into the
+        // managed objects, so no decrypted value ever sits in a persistable graph.
         let readContext = ModelContext(container)
         var descriptor = FetchDescriptor<ClipboardEntry>(
             sortBy: [SortDescriptor(\.timestamp, order: .reverse)]
@@ -90,36 +99,48 @@ final class StorageManager {
         let entries = try readContext.fetch(descriptor)
 
         return entries.map { entry in
-            entry.plainText = decryptString(entry.plainText)
-            entry.urlString = decryptString(entry.urlString)
-            entry.filePathsJSON = decryptString(entry.filePathsJSON)
-            entry.imageData = decryptData(entry.imageData)
-            entry.richTextData = decryptData(entry.richTextData)
-            return ClipboardItem(entry)
+            ClipboardItem(
+                id: entry.persistentModelID,
+                timestamp: entry.timestamp,
+                contentType: entry.contentType,
+                plainText: decryptString(entry.plainText),
+                urlString: decryptString(entry.urlString),
+                filePaths: ClipboardEntry.decodeFilePaths(decryptString(entry.filePathsJSON)),
+                sourceAppName: entry.sourceAppName,
+                isPinned: entry.isPinned
+            )
         }
     }
 
+    /// Fetches and decrypts one entry's image payload, or nil if the row is gone.
+    /// The throwaway context and the decrypted bytes both die when this returns.
+    func imageData(for id: PersistentIdentifier) throws -> Data? {
+        guard let entry = try fetchEntry(for: id, in: ModelContext(container)) else { return nil }
+        return decryptData(entry.imageData)
+    }
+
+    /// Fetches and decrypts one entry's rich-text payload, or nil if the row is gone.
+    func richTextData(for id: PersistentIdentifier) throws -> Data? {
+        guard let entry = try fetchEntry(for: id, in: ModelContext(container)) else { return nil }
+        return decryptData(entry.richTextData)
+    }
+
     func delete(entryWithID id: PersistentIdentifier) throws {
-        let all = try context.fetch(FetchDescriptor<ClipboardEntry>())
-        guard let entry = all.first(where: { $0.persistentModelID == id }) else { return }
+        guard let entry = try fetchEntry(for: id, in: context) else { return }
         context.delete(entry)
         try context.save()
         changeCount += 1
     }
 
     func togglePin(entryWithID id: PersistentIdentifier) throws {
-        let all = try context.fetch(FetchDescriptor<ClipboardEntry>())
-        guard let entry = all.first(where: { $0.persistentModelID == id }) else { return }
+        guard let entry = try fetchEntry(for: id, in: context) else { return }
         entry.isPinned.toggle()
         try context.save()
         changeCount += 1
     }
 
     func deleteAll() throws {
-        let entries = try context.fetch(FetchDescriptor<ClipboardEntry>())
-        for entry in entries {
-            context.delete(entry)
-        }
+        try context.delete(model: ClipboardEntry.self)
         try context.save()
         changeCount += 1
     }
@@ -131,13 +152,11 @@ final class StorageManager {
         guard days > 0 else { return 0 }
 
         let cutoff = Date().addingTimeInterval(-Double(days) * 86400)
-        let allEntries = try context.fetch(FetchDescriptor<ClipboardEntry>())
-        var count = 0
-        for entry in allEntries where !entry.isPinned && entry.timestamp < cutoff {
-            context.delete(entry)
-            count += 1
-        }
+        let expired = #Predicate<ClipboardEntry> { !$0.isPinned && $0.timestamp < cutoff }
+        // delete(model:where:) reports no count, and callers need one.
+        let count = try context.fetchCount(FetchDescriptor(predicate: expired))
         if count > 0 {
+            try context.delete(model: ClipboardEntry.self, where: expired)
             try context.save()
             changeCount += 1
         }
@@ -145,6 +164,21 @@ final class StorageManager {
     }
 
     // MARK: - Private
+
+    /// Fetches one entry by id, or nil if its row no longer exists.
+    ///
+    /// `model(for:)` never returns nil: for a deleted row it hands back a shell whose first
+    /// attribute access traps with "This model instance was invalidated because its backing
+    /// data could no longer be found the store". The shell is indistinguishable from a live
+    /// model without touching an attribute, and `isDeleted` is context state, so it reads
+    /// false for both. Existence is therefore established first via `fetchIdentifiers`,
+    /// which materialises no models and reads no blob columns. Callers and every mutation
+    /// are `@MainActor` and synchronous, so the check cannot interleave with a delete.
+    private func fetchEntry(for id: PersistentIdentifier, in context: ModelContext) throws -> ClipboardEntry? {
+        let ids = try context.fetchIdentifiers(FetchDescriptor<ClipboardEntry>())
+        guard ids.contains(id) else { return nil }
+        return context.model(for: id) as? ClipboardEntry
+    }
 
     /// Decrypts a string, falling back to the original value for pre-encryption data.
     private func decryptString(_ value: String?) -> String? {
@@ -175,24 +209,24 @@ final class StorageManager {
         return try context.fetch(descriptor).first
     }
 
+    /// Runs on every save, so it counts rather than materialising the whole history.
     private func enforceHistoryLimit() throws {
-        let allEntries = try context.fetch(
-            FetchDescriptor<ClipboardEntry>(
-                sortBy: [SortDescriptor(\.timestamp, order: .reverse)]
-            )
+        let pinnedCount = try context.fetchCount(
+            FetchDescriptor<ClipboardEntry>(predicate: #Predicate { $0.isPinned })
         )
 
-        let unpinned = allEntries.filter { !$0.isPinned }
-        let pinned = allEntries.filter { $0.isPinned }
-
         // Only prune unpinned entries; pinned count doesn't matter
-        let maxUnpinned = max(0, historyLimit - pinned.count)
-        if unpinned.count > maxUnpinned {
-            let toDelete = unpinned.suffix(from: maxUnpinned)
-            for entry in toDelete {
-                context.delete(entry)
-            }
-            try context.save()
+        var overflow = FetchDescriptor<ClipboardEntry>(
+            predicate: #Predicate { !$0.isPinned },
+            sortBy: [SortDescriptor(\.timestamp, order: .reverse)]
+        )
+        overflow.fetchOffset = max(0, historyLimit - pinnedCount)
+
+        let toDelete = try context.fetch(overflow)
+        guard !toDelete.isEmpty else { return }
+        for entry in toDelete {
+            context.delete(entry)
         }
+        try context.save()
     }
 }

@@ -32,13 +32,14 @@ final class AppController {
     private var settingsWindow: NSWindow?
     private var globalClickMonitor: Any?
     private var localClickMonitor: Any?
+    private var pauseToggleMonitor: Any?
 
     init() {
         logger.warning("AppController init() called")
         self.preferences = Preferences()
         self.storage = StorageManager()
         self.monitor = ClipboardMonitor()
-        self.pasteService = PasteService(monitor: monitor)
+        self.pasteService = PasteService(monitor: monitor, storage: storage)
         self.updater = UpdaterController()
 
         storage.historyLimit = preferences.historyLimit
@@ -84,7 +85,7 @@ final class AppController {
         self.statusItem = item
         updateStatusIcon()
 
-        NSEvent.addLocalMonitorForEvents(matching: .rightMouseDown) { [weak self] event in
+        pauseToggleMonitor = NSEvent.addLocalMonitorForEvents(matching: .rightMouseDown) { [weak self] event in
             guard let self, let button = self.statusItem?.button,
                   let window = event.window, window == button.window else { return event }
             let locationInButton = button.convert(event.locationInWindow, from: nil)
@@ -102,7 +103,7 @@ final class AppController {
             rootView: MenuBarView(
                 storage: storage,
                 preferences: preferences,
-                onPaste: { [weak self] entry in self?.paste(entry) },
+                onPaste: { [weak self] entry in self?.paste(entry) ?? false },
                 onPauseChanged: { [weak self] isPaused in self?.setPaused(isPaused) },
                 onOpenSettings: { [weak self] in
                     self?.openSettings()
@@ -224,9 +225,12 @@ final class AppController {
 
     // MARK: - Services
 
-    func paste(_ entry: ClipboardItem) {
-        pasteService.paste(entry)
+    /// Returns false when the entry's payload has already been pruned, so the caller
+    /// can withhold its success affirmation.
+    func paste(_ entry: ClipboardItem) -> Bool {
+        guard pasteService.paste(entry) else { return false }
         animateStatusIcon()
+        return true
     }
 
     func setPaused(_ isPaused: Bool) {
