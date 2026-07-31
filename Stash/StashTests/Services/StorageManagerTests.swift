@@ -243,8 +243,11 @@ final class StorageManagerTests: XCTestCase {
         let rawEntries = try storage.context.fetch(FetchDescriptor<ClipboardEntry>())
         XCTAssertNotEqual(rawEntries[0].imageData, imageData, "Raw stored image should be encrypted")
 
-        let entries = try storage.fetchAll()
-        XCTAssertEqual(entries[0].imageData, imageData, "fetchAll should return decrypted image data")
+        let item = try XCTUnwrap(try storage.fetchAll().first)
+        XCTAssertEqual(
+            try storage.imageData(for: item.id), imageData,
+            "The on-demand payload fetch should return decrypted image data"
+        )
     }
 
     func testDedupStillWorksWithEncryption() throws {
@@ -271,17 +274,25 @@ final class StorageManagerTests: XCTestCase {
         let items: [ClipboardItem] = try storage.fetchAll()
         let item = try XCTUnwrap(items.first)
 
-        // Carries the persistent id so delete/pin/paste can target the entry
+        // Carries the persistent id so delete/pin/paste/payload-fetch can target the entry
         XCTAssertEqual(item.id, saved.persistentModelID)
-        // Carries decrypted content for both display and re-paste
+        // Carries decrypted metadata and text for display
         XCTAssertEqual(item.contentType, .image)
         XCTAssertEqual(item.plainText, "caption")
-        XCTAssertEqual(item.imageData, Data([0xDE, 0xAD, 0xBE, 0xEF]))
+        // Binary payloads are deliberately absent from the snapshot: SwiftUI retains
+        // successive generations of @State, so bytes carried here get multiplied by
+        // the number of live generations. They resolve on demand instead.
+        XCTAssertEqual(try storage.imageData(for: item.id), Data([0xDE, 0xAD, 0xBE, 0xEF]))
 
-        // Value semantics: the snapshot stays intact after its backing entry is gone
+        // Value semantics: identity, metadata and text stay intact after the entry is gone…
         try storage.delete(entryWithID: item.id)
         XCTAssertTrue(try storage.fetchAll().isEmpty)
         XCTAssertEqual(item.plainText, "caption", "Snapshot must survive deletion of its entry")
+        // …but the payload lives only in the store, so it goes with the row.
+        XCTAssertNil(
+            try storage.imageData(for: item.id),
+            "Payload access after deletion must degrade to nil, never crash"
+        )
     }
 
     // MARK: - On-demand payloads

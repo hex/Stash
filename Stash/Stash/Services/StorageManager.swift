@@ -86,9 +86,11 @@ final class StorageManager {
     }
 
     func fetchAll() throws -> [ClipboardItem] {
-        // Decrypt in a throwaway read context, then return value-type snapshots.
-        // The managed objects and their context deallocate when this returns, so
-        // views hold no reference back into SwiftData's object graph.
+        // Read in a throwaway context and return value-type snapshots. The image and
+        // rich-text columns are never touched, so external-storage blobs stay faulted
+        // and never enter memory; callers reach them via imageData(for:) and
+        // richTextData(for:). Decryption goes into locals rather than back into the
+        // managed objects, so no decrypted value ever sits in a persistable graph.
         let readContext = ModelContext(container)
         var descriptor = FetchDescriptor<ClipboardEntry>(
             sortBy: [SortDescriptor(\.timestamp, order: .reverse)]
@@ -97,12 +99,16 @@ final class StorageManager {
         let entries = try readContext.fetch(descriptor)
 
         return entries.map { entry in
-            entry.plainText = decryptString(entry.plainText)
-            entry.urlString = decryptString(entry.urlString)
-            entry.filePathsJSON = decryptString(entry.filePathsJSON)
-            entry.imageData = decryptData(entry.imageData)
-            entry.richTextData = decryptData(entry.richTextData)
-            return ClipboardItem(entry)
+            ClipboardItem(
+                id: entry.persistentModelID,
+                timestamp: entry.timestamp,
+                contentType: entry.contentType,
+                plainText: decryptString(entry.plainText),
+                urlString: decryptString(entry.urlString),
+                filePaths: ClipboardEntry.decodeFilePaths(decryptString(entry.filePathsJSON)),
+                sourceAppName: entry.sourceAppName,
+                isPinned: entry.isPinned
+            )
         }
     }
 

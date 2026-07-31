@@ -7,7 +7,7 @@ import SwiftData
 struct MenuBarView: View {
     let storage: StorageManager
     let preferences: Preferences
-    let onPaste: (ClipboardItem) -> Void
+    let onPaste: (ClipboardItem) -> Bool
     let onPauseChanged: (Bool) -> Void
     let onOpenSettings: () -> Void
 
@@ -123,7 +123,8 @@ struct MenuBarView: View {
                         isTopmost: index == 0,
                         isHovered: hoveredEntryID == entry.id,
                         isCopied: copiedEntryID == entry.id,
-                        action: actionFor(entry)
+                        action: actionFor(entry),
+                        loadImageData: { try? storage.imageData(for: entry.id) }
                     )
                     .contentShape(Rectangle())
                     .onTapGesture { copyEntry(entry) }
@@ -188,7 +189,9 @@ struct MenuBarView: View {
     // MARK: - Actions
 
     private func copyEntry(_ entry: ClipboardItem) {
-        onPaste(entry)
+        // Payloads load on demand now, so a row pruned since the last refresh pastes
+        // nothing. Without this guard the affirmation would claim a copy that never happened.
+        guard onPaste(entry) else { return }
         withAnimation(.easeIn(duration: 0.15)) {
             copiedEntryID = entry.id
         }
@@ -202,8 +205,8 @@ struct MenuBarView: View {
     private func actionFor(_ entry: ClipboardItem) -> EntryRowView.Action? {
         switch entry.contentType {
         case .image:
-            guard let data = entry.imageData else { return nil }
             return EntryRowView.Action(label: "Preview", systemImage: "eye") {
+                guard let data = try? storage.imageData(for: entry.id) else { return }
                 let url = FileManager.default.temporaryDirectory.appendingPathComponent("stash-preview.png")
                 try? data.write(to: url)
                 NSWorkspace.shared.open(url)

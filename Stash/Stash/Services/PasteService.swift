@@ -7,14 +7,21 @@ import AppKit
 final class PasteService {
     private let pasteboard: NSPasteboard
     private let monitor: ClipboardMonitor
+    private let storage: StorageManager
 
-    init(pasteboard: NSPasteboard = .general, monitor: ClipboardMonitor) {
+    init(pasteboard: NSPasteboard = .general, monitor: ClipboardMonitor, storage: StorageManager) {
         self.pasteboard = pasteboard
         self.monitor = monitor
+        self.storage = storage
     }
 
-    func paste(_ entry: ClipboardItem) {
+    /// Returns false when the entry's payload could no longer be loaded, which happens
+    /// if the row was pruned between the last refresh and this click. Callers must not
+    /// report success in that case.
+    @discardableResult
+    func paste(_ entry: ClipboardItem) -> Bool {
         pasteboard.clearContents()
+        var pasted = true
 
         switch entry.contentType {
         case .plainText:
@@ -25,14 +32,18 @@ final class PasteService {
             pasteboard.setString(urlString, forType: .string)
 
         case .image:
-            if let data = entry.imageData {
+            if let data = try? storage.imageData(for: entry.id) {
                 pasteboard.setData(data, forType: .png)
+            } else {
+                pasted = false
             }
 
         case .richText:
             let item = NSPasteboardItem()
-            if let rtfData = entry.richTextData {
+            if let rtfData = try? storage.richTextData(for: entry.id) {
                 item.setData(rtfData, forType: .rtf)
+            } else {
+                pasted = false
             }
             if let text = entry.plainText {
                 item.setString(text, forType: .string)
@@ -50,5 +61,6 @@ final class PasteService {
         }
 
         monitor.markOwnChangeCount(pasteboard.changeCount)
+        return pasted
     }
 }

@@ -11,112 +11,116 @@ final class PasteServiceTests: XCTestCase {
     private var pasteboard: NSPasteboard!
     private var pasteService: PasteService!
     private var monitor: ClipboardMonitor!
+    private var storage: StorageManager!
+    private var crypto: CryptoService!
 
     override func setUp() {
         super.setUp()
         let pb = NSPasteboard(name: .init("com.hexul.Stash.test.\(UUID().uuidString)"))
         pasteboard = pb
         monitor = ClipboardMonitor()
-        pasteService = PasteService(pasteboard: pb, monitor: monitor)
+        crypto = CryptoService(keychainService: "com.hexul.Stash.tests.\(UUID().uuidString)")
+        storage = StorageManager(inMemory: true, crypto: crypto)
+        pasteService = PasteService(pasteboard: pb, monitor: monitor, storage: storage)
     }
 
     override func tearDown() {
         pasteboard?.releaseGlobally()
+        crypto?.deleteKey()
         pasteService = nil
         monitor = nil
+        storage = nil
+        crypto = nil
         pasteboard = nil
         super.tearDown()
     }
 
-    // MARK: - Plain text
-
-    func testPastePlainText() {
-        let entry = ClipboardEntry(
-            contentType: .plainText,
-            plainText: "Hello, world!",
+    /// Round-trips content through the store so tests exercise the same encrypt →
+    /// persist → decrypt path the app uses, rather than a hand-built snapshot.
+    private func storedItem(
+        contentType: ContentType,
+        plainText: String? = nil,
+        urlString: String? = nil,
+        filePaths: [String]? = nil,
+        imageData: Data? = nil,
+        richTextData: Data? = nil
+    ) throws -> ClipboardItem {
+        try storage.save(
+            contentType: contentType,
+            plainText: plainText,
+            urlString: urlString,
+            filePaths: filePaths,
+            imageData: imageData,
+            richTextData: richTextData,
             sourceAppBundleID: nil,
             sourceAppName: nil
         )
-        pasteService.paste(ClipboardItem(entry))
+        return try XCTUnwrap(try storage.fetchAll().first)
+    }
+
+    // MARK: - Plain text
+
+    func testPastePlainText() throws {
+        pasteService.paste(try storedItem(contentType: .plainText, plainText: "Hello, world!"))
 
         XCTAssertEqual(pasteboard.string(forType: .string), "Hello, world!")
     }
 
     // MARK: - URL
 
-    func testPasteURL() {
-        let entry = ClipboardEntry(
+    func testPasteURL() throws {
+        pasteService.paste(try storedItem(
             contentType: .url,
             plainText: "https://example.com",
-            urlString: "https://example.com",
-            sourceAppBundleID: nil,
-            sourceAppName: nil
-        )
-        pasteService.paste(ClipboardItem(entry))
+            urlString: "https://example.com"
+        ))
 
         XCTAssertEqual(pasteboard.string(forType: .string), "https://example.com")
     }
 
     // MARK: - Image
 
-    func testPasteImage() {
+    func testPasteImage() throws {
         let imageData = Data([0x89, 0x50, 0x4E, 0x47])
-        let entry = ClipboardEntry(
-            contentType: .image,
-            imageData: imageData,
-            sourceAppBundleID: nil,
-            sourceAppName: nil
-        )
-        pasteService.paste(ClipboardItem(entry))
+        pasteService.paste(try storedItem(contentType: .image, imageData: imageData))
 
-        XCTAssertNotNil(pasteboard.data(forType: .png))
+        XCTAssertEqual(
+            pasteboard.data(forType: .png), imageData,
+            "Full-fidelity bytes must survive encrypt → store → decrypt"
+        )
     }
 
     // MARK: - Rich text
 
-    func testPasteRichTextIncludesPlainFallback() {
-        let rtfData = "{\\rtf1 Hello}".data(using: .utf8)!
-        let entry = ClipboardEntry(
+    func testPasteRichTextIncludesPlainFallback() throws {
+        let rtfData = Data("{\\rtf1 Hello}".utf8)
+        pasteService.paste(try storedItem(
             contentType: .richText,
             plainText: "Hello",
-            richTextData: rtfData,
-            sourceAppBundleID: nil,
-            sourceAppName: nil
-        )
-        pasteService.paste(ClipboardItem(entry))
+            richTextData: rtfData
+        ))
 
-        XCTAssertNotNil(pasteboard.data(forType: .rtf), "RTF data should be on pasteboard")
+        XCTAssertEqual(pasteboard.data(forType: .rtf), rtfData, "RTF data should be on pasteboard")
         XCTAssertEqual(pasteboard.string(forType: .string), "Hello", "Plain text fallback should be present")
     }
 
     // MARK: - File URLs
 
-    func testPasteFileURLs() {
-        let paths = ["/tmp/test.txt"]
-        let entry = ClipboardEntry(
+    func testPasteFileURLs() throws {
+        pasteService.paste(try storedItem(
             contentType: .fileURL,
             plainText: "/tmp/test.txt",
-            filePaths: paths,
-            sourceAppBundleID: nil,
-            sourceAppName: nil
-        )
-        pasteService.paste(ClipboardItem(entry))
+            filePaths: ["/tmp/test.txt"]
+        ))
 
-        let pastedString = pasteboard.string(forType: .string)
-        XCTAssertEqual(pastedString, "/tmp/test.txt")
+        XCTAssertEqual(pasteboard.string(forType: .string), "/tmp/test.txt")
     }
 
     // MARK: - Self-capture prevention
 
-    func testPasteUpdatesMonitorChangeCount() {
+    func testPasteUpdatesMonitorChangeCount() throws {
         let beforeCount = pasteboard.changeCount
-        let entry = ClipboardEntry(
-            contentType: .plainText,
-            plainText: "test",
-            sourceAppBundleID: nil,
-            sourceAppName: nil
-        )
-        pasteService.paste(ClipboardItem(entry))
+        pasteService.paste(try storedItem(contentType: .plainText, plainText: "test"))
 
         XCTAssertGreaterThan(pasteboard.changeCount, beforeCount)
     }

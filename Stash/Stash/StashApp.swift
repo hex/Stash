@@ -39,7 +39,7 @@ final class AppController {
         self.preferences = Preferences()
         self.storage = StorageManager()
         self.monitor = ClipboardMonitor()
-        self.pasteService = PasteService(monitor: monitor)
+        self.pasteService = PasteService(monitor: monitor, storage: storage)
         self.updater = UpdaterController()
 
         storage.historyLimit = preferences.historyLimit
@@ -103,7 +103,7 @@ final class AppController {
             rootView: MenuBarView(
                 storage: storage,
                 preferences: preferences,
-                onPaste: { [weak self] entry in self?.paste(entry) },
+                onPaste: { [weak self] entry in self?.paste(entry) ?? false },
                 onPauseChanged: { [weak self] isPaused in self?.setPaused(isPaused) },
                 onOpenSettings: { [weak self] in
                     self?.openSettings()
@@ -225,9 +225,12 @@ final class AppController {
 
     // MARK: - Services
 
-    func paste(_ entry: ClipboardItem) {
-        pasteService.paste(entry)
+    /// Returns false when the entry's payload has already been pruned, so the caller
+    /// can withhold its success affirmation.
+    func paste(_ entry: ClipboardItem) -> Bool {
+        guard pasteService.paste(entry) else { return false }
         animateStatusIcon()
+        return true
     }
 
     func setPaused(_ isPaused: Bool) {

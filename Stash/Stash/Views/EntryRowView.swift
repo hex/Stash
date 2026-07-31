@@ -15,9 +15,11 @@ struct EntryRowView: View {
     let isHovered: Bool
     let isCopied: Bool
     let action: Action?
+    let loadImageData: @MainActor () -> Data?
 
     @State private var buttonHovered = false
     @State private var cachedThumbnail: NSImage?
+    @State private var imageLabel: String?
 
     var body: some View {
         rowContent
@@ -47,27 +49,25 @@ struct EntryRowView: View {
     }
 
     private func loadThumbnail() async {
-        guard entry.contentType == .image, let data = entry.imageData else {
+        guard entry.contentType == .image else {
             cachedThumbnail = nil
             return
         }
-        let thumb = await Task.detached(priority: .userInitiated) {
-            Self.makeThumbnail(from: data, maxPixelSize: 224)
-        }.value
-        cachedThumbnail = thumb
-    }
-
-    private nonisolated static func makeThumbnail(from data: Data, maxPixelSize: Int) -> NSImage? {
-        let options: [CFString: Any] = [
-            kCGImageSourceCreateThumbnailFromImageAlways: true,
-            kCGImageSourceThumbnailMaxPixelSize: maxPixelSize,
-            kCGImageSourceShouldCacheImmediately: true,
-        ]
-        guard let source = CGImageSourceCreateWithData(data as CFData, nil),
-              let thumb = CGImageSourceCreateThumbnailAtIndex(source, 0, options as CFDictionary) else {
-            return nil
+        // `.task(id:)` re-fires whenever the row appears, not only when the id changes,
+        // so a cache hit here skips the store fetch and the decryption as well as the
+        // decode. Checking before loadImageData() is what makes a popover reopen free.
+        if let hit = await ThumbnailStore.shared.cached(entry.id) {
+            cachedThumbnail = hit.image
+            imageLabel = hit.label
+            return
         }
-        return NSImage(cgImage: thumb, size: NSSize(width: thumb.width, height: thumb.height))
+        guard let data = loadImageData() else {
+            cachedThumbnail = nil
+            return
+        }
+        let made = await ThumbnailStore.shared.make(for: entry.id, from: data)
+        cachedThumbnail = made?.image
+        imageLabel = made?.label
     }
 
     private var rowFill: Color {
@@ -165,7 +165,7 @@ struct EntryRowView: View {
     private var contentPreview: some View {
         switch entry.contentType {
         case .image:
-            Text(imageDescription)
+            Text(imageLabel ?? "Image")
                 .font(.body)
                 .foregroundStyle(Color(red: 0.545, green: 0.435, blue: 0.980)) // purple, matches badge
                 .lineLimit(1)
@@ -215,14 +215,6 @@ struct EntryRowView: View {
     }
 
     // MARK: - Content helpers
-
-    private var imageDescription: String {
-        guard let data = entry.imageData,
-              let rep = NSBitmapImageRep(data: data) else {
-            return "Image"
-        }
-        return "\(rep.pixelsWide)×\(rep.pixelsHigh) image"
-    }
 
     private var displayText: String {
         let text = previewText
