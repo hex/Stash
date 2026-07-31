@@ -207,7 +207,9 @@ struct MenuBarView: View {
         case .image:
             return EntryRowView.Action(label: "Preview", systemImage: "eye") {
                 guard let data = try? storage.imageData(for: entry.id) else { return }
-                let url = FileManager.default.temporaryDirectory.appendingPathComponent("stash-preview.png")
+                let url = FileManager.default.temporaryDirectory
+                    .appendingPathComponent("stash-preview")
+                    .appendingPathExtension(ImageFormat.fileExtension(of: data))
                 try? data.write(to: url)
                 NSWorkspace.shared.open(url)
             }

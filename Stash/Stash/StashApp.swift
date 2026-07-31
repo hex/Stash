@@ -258,8 +258,12 @@ final class AppController {
             object: nil,
             queue: .main
         ) { [weak self] _ in
-            guard let self, self.preferences.clearOnQuit else { return }
-            try? self.storage.deleteAll()
+            // Registering with queue: .main guarantees this body runs on the main actor,
+            // which the Sendable closure signature has no way to express.
+            MainActor.assumeIsolated {
+                guard let self, self.preferences.clearOnQuit else { return }
+                try? self.storage.deleteAll()
+            }
         }
     }
 
