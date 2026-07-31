@@ -32,6 +32,7 @@ final class AppController {
     private var settingsWindow: NSWindow?
     private var globalClickMonitor: Any?
     private var localClickMonitor: Any?
+    private var pauseToggleMonitor: Any?
 
     init() {
         logger.warning("AppController init() called")
@@ -84,7 +85,7 @@ final class AppController {
         self.statusItem = item
         updateStatusIcon()
 
-        NSEvent.addLocalMonitorForEvents(matching: .rightMouseDown) { [weak self] event in
+        pauseToggleMonitor = NSEvent.addLocalMonitorForEvents(matching: .rightMouseDown) { [weak self] event in
             guard let self, let button = self.statusItem?.button,
                   let window = event.window, window == button.window else { return event }
             let locationInButton = button.convert(event.locationInWindow, from: nil)

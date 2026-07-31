@@ -100,26 +100,21 @@ final class StorageManager {
     }
 
     func delete(entryWithID id: PersistentIdentifier) throws {
-        let all = try context.fetch(FetchDescriptor<ClipboardEntry>())
-        guard let entry = all.first(where: { $0.persistentModelID == id }) else { return }
+        guard let entry = try fetchEntry(for: id, in: context) else { return }
         context.delete(entry)
         try context.save()
         changeCount += 1
     }
 
     func togglePin(entryWithID id: PersistentIdentifier) throws {
-        let all = try context.fetch(FetchDescriptor<ClipboardEntry>())
-        guard let entry = all.first(where: { $0.persistentModelID == id }) else { return }
+        guard let entry = try fetchEntry(for: id, in: context) else { return }
         entry.isPinned.toggle()
         try context.save()
         changeCount += 1
     }
 
     func deleteAll() throws {
-        let entries = try context.fetch(FetchDescriptor<ClipboardEntry>())
-        for entry in entries {
-            context.delete(entry)
-        }
+        try context.delete(model: ClipboardEntry.self)
         try context.save()
         changeCount += 1
     }
@@ -131,13 +126,11 @@ final class StorageManager {
         guard days > 0 else { return 0 }
 
         let cutoff = Date().addingTimeInterval(-Double(days) * 86400)
-        let allEntries = try context.fetch(FetchDescriptor<ClipboardEntry>())
-        var count = 0
-        for entry in allEntries where !entry.isPinned && entry.timestamp < cutoff {
-            context.delete(entry)
-            count += 1
-        }
+        let expired = #Predicate<ClipboardEntry> { !$0.isPinned && $0.timestamp < cutoff }
+        // delete(model:where:) reports no count, and callers need one.
+        let count = try context.fetchCount(FetchDescriptor(predicate: expired))
         if count > 0 {
+            try context.delete(model: ClipboardEntry.self, where: expired)
             try context.save()
             changeCount += 1
         }
@@ -145,6 +138,21 @@ final class StorageManager {
     }
 
     // MARK: - Private
+
+    /// Fetches one entry by id, or nil if its row no longer exists.
+    ///
+    /// `model(for:)` never returns nil: for a deleted row it hands back a shell whose first
+    /// attribute access traps with "This model instance was invalidated because its backing
+    /// data could no longer be found the store". The shell is indistinguishable from a live
+    /// model without touching an attribute, and `isDeleted` is context state, so it reads
+    /// false for both. Existence is therefore established first via `fetchIdentifiers`,
+    /// which materialises no models and reads no blob columns. Callers and every mutation
+    /// are `@MainActor` and synchronous, so the check cannot interleave with a delete.
+    private func fetchEntry(for id: PersistentIdentifier, in context: ModelContext) throws -> ClipboardEntry? {
+        let ids = try context.fetchIdentifiers(FetchDescriptor<ClipboardEntry>())
+        guard ids.contains(id) else { return nil }
+        return context.model(for: id) as? ClipboardEntry
+    }
 
     /// Decrypts a string, falling back to the original value for pre-encryption data.
     private func decryptString(_ value: String?) -> String? {
@@ -175,24 +183,24 @@ final class StorageManager {
         return try context.fetch(descriptor).first
     }
 
+    /// Runs on every save, so it counts rather than materialising the whole history.
     private func enforceHistoryLimit() throws {
-        let allEntries = try context.fetch(
-            FetchDescriptor<ClipboardEntry>(
-                sortBy: [SortDescriptor(\.timestamp, order: .reverse)]
-            )
+        let pinnedCount = try context.fetchCount(
+            FetchDescriptor<ClipboardEntry>(predicate: #Predicate { $0.isPinned })
         )
 
-        let unpinned = allEntries.filter { !$0.isPinned }
-        let pinned = allEntries.filter { $0.isPinned }
-
         // Only prune unpinned entries; pinned count doesn't matter
-        let maxUnpinned = max(0, historyLimit - pinned.count)
-        if unpinned.count > maxUnpinned {
-            let toDelete = unpinned.suffix(from: maxUnpinned)
-            for entry in toDelete {
-                context.delete(entry)
-            }
-            try context.save()
+        var overflow = FetchDescriptor<ClipboardEntry>(
+            predicate: #Predicate { !$0.isPinned },
+            sortBy: [SortDescriptor(\.timestamp, order: .reverse)]
+        )
+        overflow.fetchOffset = max(0, historyLimit - pinnedCount)
+
+        let toDelete = try context.fetch(overflow)
+        guard !toDelete.isEmpty else { return }
+        for entry in toDelete {
+            context.delete(entry)
         }
+        try context.save()
     }
 }
