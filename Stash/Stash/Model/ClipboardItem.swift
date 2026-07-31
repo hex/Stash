@@ -4,9 +4,9 @@
 import Foundation
 import SwiftData
 
-/// Carries only what a row renders. Payload bytes are deliberately absent: SwiftUI
-/// retains successive generations of whatever lands in `@State`, so a snapshot that
-/// held a decrypted image multiplied that image by the number of live generations.
+/// Carries only what a row renders. Payload bytes stay out of it: SwiftUI retains
+/// successive generations of whatever lands in `@State`, so an image carried here
+/// costs one copy per live generation. Payloads load on demand from StorageManager.
 struct ClipboardItem: Identifiable, Sendable {
     let id: PersistentIdentifier
     let timestamp: Date

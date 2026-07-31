@@ -40,14 +40,16 @@ final class PasteService {
 
         case .richText:
             let item = NSPasteboardItem()
-            if let rtfData = try? storage.richTextData(for: entry.id) {
+            let rtfData = try? storage.richTextData(for: entry.id)
+            if let rtfData {
                 item.setData(rtfData, forType: .rtf)
-            } else {
-                pasted = false
             }
             if let text = entry.plainText {
                 item.setString(text, forType: .string)
             }
+            // The plain-text fallback still lands even when the formatted bytes are
+            // unavailable, so that counts as a paste — degraded, but not a failure.
+            pasted = rtfData != nil || entry.plainText != nil
             pasteboard.writeObjects([item])
 
         case .fileURL:

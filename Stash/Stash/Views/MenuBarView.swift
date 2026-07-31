@@ -189,8 +189,8 @@ struct MenuBarView: View {
     // MARK: - Actions
 
     private func copyEntry(_ entry: ClipboardItem) {
-        // Payloads load on demand now, so a row pruned since the last refresh pastes
-        // nothing. Without this guard the affirmation would claim a copy that never happened.
+        // A row pruned since the last refresh has no payload left to load, and the
+        // affirmation must not claim a copy that did not happen.
         guard onPaste(entry) else { return }
         withAnimation(.easeIn(duration: 0.15)) {
             copiedEntryID = entry.id

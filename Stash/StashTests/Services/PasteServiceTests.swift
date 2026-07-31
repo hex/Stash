@@ -116,6 +116,33 @@ final class PasteServiceTests: XCTestCase {
         XCTAssertEqual(pasteboard.string(forType: .string), "/tmp/test.txt")
     }
 
+    /// A rich-text entry whose formatted bytes are gone still places its plain-text
+    /// fallback, so it reports a paste rather than a failure.
+    func testPasteRichTextReportsSuccessOnPlainFallbackAlone() throws {
+        let item = try storedItem(
+            contentType: .richText,
+            plainText: "Hello",
+            richTextData: Data("{\\rtf1 Hello}".utf8)
+        )
+        try storage.delete(entryWithID: item.id)
+
+        let pasted = pasteService.paste(item)
+
+        XCTAssertTrue(pasted, "Plain-text fallback landed, so this is a degraded paste, not a failure")
+        XCTAssertEqual(pasteboard.string(forType: .string), "Hello")
+        XCTAssertNil(pasteboard.data(forType: .rtf), "Formatted bytes are gone with the row")
+    }
+
+    func testPasteImageReportsFailureWhenPayloadGone() throws {
+        let item = try storedItem(contentType: .image, imageData: Data([0x89, 0x50, 0x4E, 0x47]))
+        try storage.delete(entryWithID: item.id)
+
+        let pasted = pasteService.paste(item)
+
+        XCTAssertFalse(pasted, "Nothing was placed, so the caller must not claim success")
+        XCTAssertNil(pasteboard.data(forType: .png))
+    }
+
     // MARK: - Self-capture prevention
 
     func testPasteUpdatesMonitorChangeCount() throws {
