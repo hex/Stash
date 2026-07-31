@@ -84,8 +84,15 @@ final class ContentTypeTests: XCTestCase {
 
     // MARK: - Priority ordering
 
-    func testFileURLTakesPriorityOverImage() {
+    /// Screenshot tools put both the saved file path and the raw image bytes on the
+    /// pasteboard. The user means "I have an image"; the file is how it got captured.
+    func testImageTakesPriorityOverFileURL() {
         let types: [NSPasteboard.PasteboardType] = [.tiff, .fileURL]
+        XCTAssertEqual(ContentType.detect(from: types), .image)
+    }
+
+    func testFileURLWithoutImageBytesStaysFileURL() {
+        let types: [NSPasteboard.PasteboardType] = [.fileURL, .string]
         XCTAssertEqual(ContentType.detect(from: types), .fileURL)
     }
 

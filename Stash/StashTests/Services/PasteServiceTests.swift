@@ -90,6 +90,29 @@ final class PasteServiceTests: XCTestCase {
         )
     }
 
+    /// The monitor stores TIFF whenever the pasteboard carries no PNG, so pasting must
+    /// declare the type the bytes actually are.
+    func testPasteImageDeclaresTheTypeTheBytesActuallyAre() throws {
+        let rep = try XCTUnwrap(NSBitmapImageRep(
+            bitmapDataPlanes: nil,
+            pixelsWide: 4, pixelsHigh: 4,
+            bitsPerSample: 8, samplesPerPixel: 4,
+            hasAlpha: true, isPlanar: false,
+            colorSpaceName: .deviceRGB,
+            bytesPerRow: 0, bitsPerPixel: 0
+        ))
+        let tiff = try XCTUnwrap(rep.tiffRepresentation)
+
+        pasteService.paste(try storedItem(contentType: .image, imageData: tiff))
+
+        XCTAssertEqual(pasteboard.data(forType: .tiff), tiff)
+        // Assert on what was declared: AppKit may synthesise other renditions on read.
+        XCTAssertFalse(
+            pasteboard.types?.contains(.png) ?? false,
+            "TIFF bytes must not be declared as PNG"
+        )
+    }
+
     // MARK: - Rich text
 
     func testPasteRichTextIncludesPlainFallback() throws {

@@ -33,7 +33,7 @@ final class PasteService {
 
         case .image:
             if let data = try? storage.imageData(for: entry.id) {
-                pasteboard.setData(data, forType: .png)
+                pasteboard.setData(data, forType: ImageFormat.pasteboardType(of: data))
             } else {
                 pasted = false
             }
