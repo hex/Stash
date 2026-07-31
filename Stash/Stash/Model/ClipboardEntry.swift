@@ -25,10 +25,14 @@ final class ClipboardEntry {
         set { contentTypeRaw = newValue.rawValue }
     }
 
+    static func decodeFilePaths(_ json: String?) -> [String]? {
+        guard let json else { return nil }
+        return try? JSONDecoder().decode([String].self, from: Data(json.utf8))
+    }
+
     var filePaths: [String]? {
         get {
-            guard let json = filePathsJSON else { return nil }
-            return try? JSONDecoder().decode([String].self, from: Data(json.utf8))
+            Self.decodeFilePaths(filePathsJSON)
         }
         set {
             guard let paths = newValue else { filePathsJSON = nil; return }

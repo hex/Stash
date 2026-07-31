@@ -14,14 +14,21 @@ final class StorageManager {
     /// Incremented on every mutation so SwiftUI views re-evaluate when data changes.
     private(set) var changeCount: Int = 0
 
-    init(inMemory: Bool = false, crypto: CryptoService = CryptoService()) {
+    /// `storeURL` points the container at a specific SQLite file. Tests use it to reach
+    /// the `.externalStorage` path, which an in-memory container never engages.
+    init(inMemory: Bool = false, storeURL: URL? = nil, crypto: CryptoService = CryptoService()) {
         let schema = Schema([ClipboardEntry.self])
-        let config = ModelConfiguration("Stash", schema: schema, isStoredInMemoryOnly: inMemory)
+        let config: ModelConfiguration
+        if let storeURL {
+            config = ModelConfiguration(schema: schema, url: storeURL)
+        } else {
+            config = ModelConfiguration("Stash", schema: schema, isStoredInMemoryOnly: inMemory)
+        }
         self.container = try! ModelContainer(for: schema, configurations: [config])
         self.context = ModelContext(container)
         self.crypto = crypto
 
-        if !inMemory {
+        if !inMemory && storeURL == nil {
             excludeStoreFromTimeMachine()
         }
     }
@@ -97,6 +104,19 @@ final class StorageManager {
             entry.richTextData = decryptData(entry.richTextData)
             return ClipboardItem(entry)
         }
+    }
+
+    /// Fetches and decrypts one entry's image payload, or nil if the row is gone.
+    /// The throwaway context and the decrypted bytes both die when this returns.
+    func imageData(for id: PersistentIdentifier) throws -> Data? {
+        guard let entry = try fetchEntry(for: id, in: ModelContext(container)) else { return nil }
+        return decryptData(entry.imageData)
+    }
+
+    /// Fetches and decrypts one entry's rich-text payload, or nil if the row is gone.
+    func richTextData(for id: PersistentIdentifier) throws -> Data? {
+        guard let entry = try fetchEntry(for: id, in: ModelContext(container)) else { return nil }
+        return decryptData(entry.richTextData)
     }
 
     func delete(entryWithID id: PersistentIdentifier) throws {
