@@ -1,7 +1,8 @@
 // ABOUTME: UserDefaults-backed app preferences with value clamping.
 // ABOUTME: Observable for SwiftUI bindings, injectable UserDefaults for testing.
 
-import Foundation
+import SwiftUI
+import AppKit
 
 @Observable
 final class Preferences {
@@ -153,6 +154,24 @@ enum AppearanceOption: String, CaseIterable, Identifiable {
         case .auto:  return "Auto"
         case .light: return "Light"
         case .dark:  return "Dark"
+        }
+    }
+
+    var colorScheme: ColorScheme? {
+        switch self {
+        case .auto:  return nil
+        case .light: return .light
+        case .dark:  return .dark
+        }
+    }
+
+    /// `preferredColorScheme` steers SwiftUI but leaves an `NSView` untouched, so
+    /// AppKit-backed views need the appearance spelled out separately.
+    var nsAppearance: NSAppearance? {
+        switch self {
+        case .auto:  return nil
+        case .light: return NSAppearance(named: .aqua)
+        case .dark:  return NSAppearance(named: .darkAqua)
         }
     }
 }

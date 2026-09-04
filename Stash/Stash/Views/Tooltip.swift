@@ -50,6 +50,9 @@ private struct TooltipModifier: ViewModifier {
             }
             .animation(.easeOut(duration: 0.12), value: isVisible)
             .zIndex(isVisible ? 1 : 0)
+            // `.help()` set an accessibility hint as well as a tooltip. Carrying it here
+            // keeps `.tooltip()` a full replacement rather than only the visible half.
+            .accessibilityLabel(text)
     }
 
     private var label: some View {

@@ -10,6 +10,12 @@ enum HistoryFilter {
         return items.filter { matches($0, query: trimmed) }
     }
 
+    /// Whether a query narrows the list. Callers use it to tell "nothing stored" from
+    /// "nothing matched", so it has to agree with `apply` on what counts as blank.
+    static func isSearching(_ query: String) -> Bool {
+        !query.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+    }
+
     static func matches(_ item: ClipboardItem, query: String) -> Bool {
         contains(item.plainText, query)
             || contains(item.urlString, query)
@@ -26,4 +32,11 @@ enum HistoryFilter {
             options: [.caseInsensitive, .diacriticInsensitive]
         ) != nil
     }
+}
+
+/// Identifies a search result: the query plus the store generation it ran against.
+/// Either changing means the previous result no longer describes the history.
+struct SearchKey: Equatable {
+    let query: String
+    let generation: Int
 }

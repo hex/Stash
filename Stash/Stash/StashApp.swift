@@ -272,11 +272,59 @@ final class AppController {
     }
 
     func openHistory() {
+        present(
+            get: { self.historyWindow },
+            set: { [weak self] in self?.historyWindow = $0 },
+            title: "Clipboard History",
+            size: NSSize(width: 560, height: 640),
+            styleMask: [.titled, .closable, .resizable, .miniaturizable],
+            autosaveName: "StashHistoryWindow"
+        ) { [weak self] in
+            guard let self else { return AnyView(EmptyView()) }
+            return AnyView(HistoryWindowView(
+                storage: self.storage,
+                preferences: self.preferences,
+                onPaste: { [weak self] entry in self?.paste(entry) ?? false }
+            ))
+        }
+    }
+
+    func openSettings() {
+        present(
+            get: { self.settingsWindow },
+            set: { [weak self] in self?.settingsWindow = $0 },
+            title: "Stash Settings",
+            size: NSSize(width: 480, height: 580),
+            styleMask: [.titled, .closable]
+        ) { [weak self] in
+            guard let self else { return AnyView(EmptyView()) }
+            return AnyView(SettingsView(
+                preferences: self.preferences,
+                onExcludedAppsChanged: { [weak self] in self?.syncExcludedApps() },
+                onClearHistory: { [weak self] in try? self?.storage.deleteAll() },
+                onCheckForUpdates: { [weak self] in self?.updater.checkForUpdates() },
+                onOpenHistory: { [weak self] in self?.openHistory() }
+            ))
+        }
+    }
+
+    /// Shows a window, reusing the stored one when it is still around. Windows are
+    /// dropped on close rather than retained: their views hold decrypted entries, and
+    /// keeping those resident would defeat the encrypted store.
+    private func present(
+        get: () -> NSWindow?,
+        set: @escaping @MainActor (NSWindow?) -> Void,
+        title: String,
+        size: NSSize,
+        styleMask: NSWindow.StyleMask,
+        autosaveName: String? = nil,
+        content: () -> AnyView
+    ) {
         popover?.performClose(nil)
 
         // A miniaturized window reports isVisible == false, so checking visibility alone
         // would orphan it and build a second one. Deminiaturize and reuse instead.
-        if let existing = historyWindow {
+        if let existing = get() {
             if existing.isMiniaturized {
                 existing.deminiaturize(nil)
             }
@@ -285,65 +333,28 @@ final class AppController {
             return
         }
 
-        let historyView = HistoryWindowView(
-            storage: storage,
-            preferences: preferences,
-            onPaste: { [weak self] entry in self?.paste(entry) ?? false }
-        )
-
         let window = NSWindow(
-            contentRect: NSRect(x: 0, y: 0, width: 560, height: 640),
-            styleMask: [.titled, .closable, .resizable, .miniaturizable],
+            contentRect: NSRect(origin: .zero, size: size),
+            styleMask: styleMask,
             backing: .buffered,
             defer: false
         )
-        window.title = "Clipboard History"
-        window.contentViewController = NSHostingController(rootView: historyView)
-        window.setFrameAutosaveName("StashHistoryWindow")
-        window.center()
-        window.isReleasedWhenClosed = false
-        self.historyWindow = window
-
-        window.makeKeyAndOrderFront(nil)
-        NSApp.activate(ignoringOtherApps: true)
-    }
-
-    func openSettings() {
-        popover?.performClose(nil)
-
-        if let existing = settingsWindow, existing.isVisible {
-            existing.makeKeyAndOrderFront(nil)
-            NSApp.activate(ignoringOtherApps: true)
-            return
+        window.title = title
+        window.contentViewController = NSHostingController(rootView: content())
+        if let autosaveName {
+            window.setFrameAutosaveName(autosaveName)
         }
-
-        let settingsView = SettingsView(
-            preferences: preferences,
-            onExcludedAppsChanged: { [weak self] in
-                self?.syncExcludedApps()
-            },
-            onClearHistory: { [weak self] in
-                try? self?.storage.deleteAll()
-            },
-            onCheckForUpdates: { [weak self] in
-                self?.updater.checkForUpdates()
-            },
-            onOpenHistory: { [weak self] in
-                self?.openHistory()
-            }
-        )
-
-        let window = NSWindow(
-            contentRect: NSRect(x: 0, y: 0, width: 480, height: 580),
-            styleMask: [.titled, .closable],
-            backing: .buffered,
-            defer: false
-        )
-        window.title = "Stash Settings"
-        window.contentViewController = NSHostingController(rootView: settingsView)
         window.center()
         window.isReleasedWhenClosed = false
-        self.settingsWindow = window
+        set(window)
+
+        NotificationCenter.default.addObserver(
+            forName: NSWindow.willCloseNotification,
+            object: window,
+            queue: .main
+        ) { [weak self] _ in
+            MainActor.assumeIsolated { set(nil) }
+        }
 
         window.makeKeyAndOrderFront(nil)
         NSApp.activate(ignoringOtherApps: true)

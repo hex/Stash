@@ -10,7 +10,7 @@
 </p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/macOS-14%2B-blue" alt="macOS 14+">
+  <img src="https://img.shields.io/badge/macOS-15%2B-blue" alt="macOS 15+">
   <img src="https://img.shields.io/badge/Swift-6-orange" alt="Swift 6">
   <img src="https://img.shields.io/badge/license-MIT-green" alt="MIT License">
 </p>
@@ -52,7 +52,7 @@ brew install --cask hex/tap/stash
 
 | Requirement | Minimum |
 |---|---|
-| macOS | 14.0 (Sonoma) |
+| macOS | 15.0 (Sequoia) |
 | Xcode | 16.0 |
 | XcodeGen | 2.38 |
 
@@ -156,6 +156,7 @@ Stash/
 │   ├── Views/
 │   │   ├── MenuBarView.swift       # Translucent popover with entry list and controls
 │   │   ├── HistoryWindowView.swift # Resizable full-history browser with search
+│   │   ├── EntryListView.swift     # Entry list shared by popover and window
 │   │   ├── EntryRowView.swift      # Entry row with colored badge and content preview
 │   │   └── SettingsView.swift      # Preferences UI
 │   └── Support/

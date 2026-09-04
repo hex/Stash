@@ -11,7 +11,7 @@ struct EntryRowView: View {
     }
 
     let entry: ClipboardItem
-    let isTopmost: Bool
+    let isMostRecent: Bool
     let isCopied: Bool
     let action: Action?
     let loadImageData: @MainActor () -> Data?
@@ -76,7 +76,7 @@ struct EntryRowView: View {
     private var rowFill: Color {
         if isCopied  { return .green.opacity(0.10) }
         if isHovered { return .primary.opacity(0.06) }
-        if isTopmost { return .primary.opacity(0.035) }
+        if isMostRecent { return .primary.opacity(0.035) }
         return .clear
     }
 
@@ -249,9 +249,15 @@ struct EntryRowView: View {
         if seconds < 86400     { return "\(Int(seconds / 3600))h ago" }
         if seconds < 172800    { return "yesterday" }
         if seconds < 604800    { return "\(Int(seconds / 86400))d ago" }
+        return Self.absoluteDate.string(from: entry.timestamp)
+    }
+
+    /// Building a DateFormatter costs locale and ICU pattern setup, and every row older
+    /// than a week reaches this on each body evaluation.
+    private static let absoluteDate: DateFormatter = {
         let formatter = DateFormatter()
         formatter.dateStyle = .medium
         formatter.timeStyle = .none
-        return formatter.string(from: entry.timestamp)
-    }
+        return formatter
+    }()
 }

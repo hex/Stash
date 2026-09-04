@@ -12,17 +12,19 @@ struct MenuBarView: View {
     let onOpenSettings: () -> Void
     let onOpenHistory: () -> Void
 
-    @State private var copiedEntryID: PersistentIdentifier?
     @State private var metrics = ScrollMetrics()
     @State private var entries: [ClipboardItem] = []
     @State private var query = ""
 
+
+    @State private var matches: [ClipboardItem] = []
+
     /// An empty query shows a short quick-access list; a search reaches the whole
     /// history, since the point of searching is to find what scrolling would not.
     private var visibleEntries: [ClipboardItem] {
-        query.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
-            ? Array(entries.prefix(preferences.popoverEntryCount))
-            : HistoryFilter.apply(entries, query: query)
+        HistoryFilter.isSearching(query)
+            ? matches
+            : Array(entries.prefix(preferences.popoverEntryCount))
     }
 
     var body: some View {
@@ -45,10 +47,18 @@ struct MenuBarView: View {
         }
         .frame(width: 380, height: 400)
         .background(PopoverBackground(appearance: preferences.appearance))
-        .preferredColorScheme(preferences.appearance == .auto ? nil
-                              : (preferences.appearance == .dark ? .dark : .light))
+        .preferredColorScheme(preferences.appearance.colorScheme)
         .task(id: storage.changeCount) {
             entries = (try? storage.fetchAll()) ?? []
+        }
+        // Entries are never truncated, so a query runs over megabytes of text with
+        // diacritic folding. Debouncing keeps that off the keystroke path.
+        // Keyed on the entries too, or a copy made mid-search would leave stale matches.
+        .task(id: SearchKey(query: query, generation: storage.changeCount)) {
+            guard HistoryFilter.isSearching(query) else { return }
+            try? await Task.sleep(for: .milliseconds(150))
+            guard !Task.isCancelled else { return }
+            matches = HistoryFilter.apply(entries, query: query)
         }
     }
 
@@ -111,7 +121,7 @@ struct MenuBarView: View {
     // MARK: - Empty state
 
     private var emptyState: some View {
-        let searching = !query.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+        let searching = HistoryFilter.isSearching(query)
         return VStack(spacing: 8) {
             Spacer()
             Image(systemName: searching ? "magnifyingglass" : "tray")
@@ -160,40 +170,8 @@ struct MenuBarView: View {
 
     private func entryList(_ entries: [ClipboardItem]) -> some View {
         ScrollView {
-            LazyVStack(spacing: 0) {
-                let firstID = entries.first?.id
-                let lastID = entries.last?.id
-                ForEach(entries) { entry in
-                    let action = actionFor(entry)
-                    EntryRowView(
-                        entry: entry,
-                        isTopmost: entry.id == firstID,
-                        isCopied: copiedEntryID == entry.id,
-                        action: action,
-                        loadImageData: { try? storage.imageData(for: entry.id) }
-                    )
-                    .contentShape(Rectangle())
-                    .onTapGesture { copyEntry(entry) }
-                    .contextMenu {
-                        Button("Copy") { copyEntry(entry) }
-                        Button(entry.isPinned ? "Unpin" : "Pin") {
-                            try? storage.togglePin(entryWithID: entry.id)
-                        }
-                        if let action {
-                            Button(action.label) { action.perform() }
-                        }
-                        Divider()
-                        Button("Delete", role: .destructive) {
-                            try? storage.delete(entryWithID: entry.id)
-                        }
-                    }
-
-                    if entry.id != lastID {
-                        Divider()
-                    }
-                }
-            }
-            .padding(.vertical, 8)
+            EntryListView(entries: entries, storage: storage, onPaste: onPaste)
+                .padding(.vertical, 8)
         }
         .scrollIndicators(.never)
         .onScrollGeometryChange(for: ScrollGeometry.self) { $0 } action: { _, geo in
@@ -210,50 +188,6 @@ struct MenuBarView: View {
     }
 
     // MARK: - Actions
-
-    private func copyEntry(_ entry: ClipboardItem) {
-        // A row pruned since the last refresh has no payload left to load, and the
-        // affirmation must not claim a copy that did not happen.
-        guard onPaste(entry) else { return }
-        withAnimation(.easeIn(duration: 0.15)) {
-            copiedEntryID = entry.id
-        }
-        DispatchQueue.main.asyncAfter(deadline: .now() + 1.2) {
-            withAnimation(.easeOut(duration: 0.2)) {
-                copiedEntryID = nil
-            }
-        }
-    }
-
-    private func actionFor(_ entry: ClipboardItem) -> EntryRowView.Action? {
-        switch entry.contentType {
-        case .image:
-            return EntryRowView.Action(label: "Preview", systemImage: "eye") {
-                guard let data = try? storage.imageData(for: entry.id) else { return }
-                let url = FileManager.default.temporaryDirectory
-                    .appendingPathComponent("stash-preview")
-                    .appendingPathExtension(ImageFormat.fileExtension(of: data))
-                try? data.write(to: url)
-                NSWorkspace.shared.open(url)
-            }
-        case .fileURL:
-            guard let path = entry.filePaths?.first,
-                  FileManager.default.fileExists(atPath: path) else { return nil }
-            return EntryRowView.Action(label: "Preview", systemImage: "eye") {
-                NSWorkspace.shared.open(URL(fileURLWithPath: path))
-            }
-        case .url:
-            guard let urlString = entry.urlString,
-                  let url = URL(string: urlString) else { return nil }
-            return EntryRowView.Action(label: "Open", systemImage: "arrow.up.right.square") {
-                NSWorkspace.shared.open(url)
-            }
-        default:
-            return nil
-        }
-    }
-
-    // MARK: - Modal confirmations (NSAlert bypasses SwiftUI dialog wedging in popovers)
 
     private func confirmAndQuit() {
         let alert = NSAlert()
