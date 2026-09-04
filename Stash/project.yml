@@ -44,6 +44,9 @@ targets:
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.hexul.StashTests
+        CODE_SIGN_STYLE: Manual
+        CODE_SIGN_IDENTITY: "Developer ID Application"
+        DEVELOPMENT_TEAM: 7G4UQW35EL
         GENERATE_INFOPLIST_FILE: true
         TEST_HOST: "$(BUILT_PRODUCTS_DIR)/Stash.app/Contents/MacOS/Stash"
         BUNDLE_LOADER: "$(TEST_HOST)"
