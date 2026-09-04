@@ -70,7 +70,7 @@ struct MenuBarView: View {
                     .foregroundStyle(.secondary)
             }
             .buttonStyle(.plain)
-            .help("Settings")
+            .tooltip("Settings", anchor: .leading)
 
             Button {
                 onOpenHistory()
@@ -80,7 +80,7 @@ struct MenuBarView: View {
                     .foregroundStyle(.secondary)
             }
             .buttonStyle(.plain)
-            .help("Show full history")
+            .tooltip("Show full history", anchor: .leading)
 
             Spacer()
 
@@ -93,7 +93,7 @@ struct MenuBarView: View {
             .font(.caption)
             .foregroundStyle(.secondary)
             .tint(.blue)
-            .help(preferences.isPaused ? "Paused — toggle to resume" : "Recording — toggle to pause")
+            .tooltip(preferences.isPaused ? "Paused — toggle to resume" : "Recording — toggle to pause")
 
             Button {
                 confirmAndQuit()
@@ -103,7 +103,7 @@ struct MenuBarView: View {
                     .foregroundStyle(Color(red: 1.0, green: 0.34, blue: 0.34))
             }
             .buttonStyle(.plain)
-            .help("Quit Stash")
+            .tooltip("Quit Stash", anchor: .trailing)
             .contextMenu {
                 Button("Clear All History", role: .destructive) {
                     confirmAndClear()
@@ -155,7 +155,7 @@ struct MenuBarView: View {
                         .foregroundStyle(.tertiary)
                 }
                 .buttonStyle(.plain)
-                .help("Clear search")
+                .tooltip("Clear search", edge: .bottom, anchor: .trailing)
             }
         }
         .padding(.horizontal, 12)
