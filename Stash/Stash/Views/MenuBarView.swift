@@ -116,7 +116,7 @@ struct MenuBarView: View {
     private func entryList(_ entries: [ClipboardItem]) -> some View {
         ScrollView {
             LazyVStack(spacing: 0) {
-                let displayed = Array(entries.prefix(10))
+                let displayed = entries
                 ForEach(Array(displayed.enumerated()), id: \.element.id) { index, entry in
                     EntryRowView(
                         entry: entry,
