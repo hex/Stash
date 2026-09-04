@@ -160,7 +160,7 @@ Stash/
 │       ├── Preferences.swift       # UserDefaults wrapper
 │       ├── PasteboardConstants.swift
 │       └── UpdaterController.swift # Sparkle auto-update integration
-└── StashTests/                 # 108 tests across 9 files
+└── StashTests/                 # 114 tests across 10 files
     ├── Model/
     ├── Services/
     └── Support/
