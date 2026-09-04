@@ -44,13 +44,7 @@ struct MenuBarView: View {
             bottomToolbar
         }
         .frame(width: 380, height: 400)
-        .background(
-            Color(NSColor(name: nil, dynamicProvider: { appearance in
-                appearance.bestMatch(from: [.aqua, .darkAqua]) == .darkAqua
-                    ? NSColor(red: 0.106, green: 0.115, blue: 0.149, alpha: 1) // #1B1D26
-                    : NSColor(red: 0.965, green: 0.969, blue: 0.976, alpha: 1) // #F6F7F9
-            }))
-        )
+        .background(PopoverBackground(appearance: preferences.appearance))
         .preferredColorScheme(preferences.appearance == .auto ? nil
                               : (preferences.appearance == .dark ? .dark : .light))
         .task(id: storage.changeCount) {

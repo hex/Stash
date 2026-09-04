@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		092EF762BF05F8CB2C1CFA87 /* VisualEffectBackground.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4AF313E98D9D220796381C6D /* VisualEffectBackground.swift */; };
 		0CA62297506C140A38D8C8B9 /* EntryRowView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1D72F8DD92937F33B5E5F8C7 /* EntryRowView.swift */; };
 		0D6BA4163B86322A4305C808 /* HistoryFilter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 18ACA2DC70EDE4629F15AD4A /* HistoryFilter.swift */; };
 		13DF4C354EE1DC751CCC12AA /* HistoryFilterTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1F0C2D871DD266595F533668 /* HistoryFilterTests.swift */; };
@@ -66,6 +67,7 @@
 		336AEB429DB905D6E693F12A /* PasteboardConstants.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PasteboardConstants.swift; sourceTree = "<group>"; };
 		3553EA0DD03FDEC7AF617A74 /* HistoryWindowView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HistoryWindowView.swift; sourceTree = "<group>"; };
 		415583651345C6D9E21AE95C /* ImageFormat.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ImageFormat.swift; sourceTree = "<group>"; };
+		4AF313E98D9D220796381C6D /* VisualEffectBackground.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VisualEffectBackground.swift; sourceTree = "<group>"; };
 		4D2EF50DA837BA41181DE1DA /* ImageFormatTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ImageFormatTests.swift; sourceTree = "<group>"; };
 		4D7DF77EABB77C38A1689BE7 /* ThumbnailStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ThumbnailStore.swift; sourceTree = "<group>"; };
 		590A85722B89EC1934850786 /* ContentTypeTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentTypeTests.swift; sourceTree = "<group>"; };
@@ -194,6 +196,7 @@
 				05CC4F69A65849188846F652 /* MenuBarView.swift */,
 				F3BFE30BEA627EB8AB7EB8BE /* SettingsView.swift */,
 				21E8D8819A4856A6670922A5 /* Tooltip.swift */,
+				4AF313E98D9D220796381C6D /* VisualEffectBackground.swift */,
 			);
 			path = Views;
 			sourceTree = "<group>";
@@ -337,6 +340,7 @@
 				73AD0F2423AF382851B63F2E /* ThumbnailStore.swift in Sources */,
 				71ED23B9CDAAB0F0EB8EC766 /* Tooltip.swift in Sources */,
 				DFD0CF06A325B198900C2880 /* UpdaterController.swift in Sources */,
+				092EF762BF05F8CB2C1CFA87 /* VisualEffectBackground.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
