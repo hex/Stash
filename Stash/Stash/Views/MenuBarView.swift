@@ -12,11 +12,7 @@ struct MenuBarView: View {
     let onOpenSettings: () -> Void
 
     @State private var copiedEntryID: PersistentIdentifier?
-    @State private var hoveredEntryID: PersistentIdentifier?
-    @State private var scrollOffset: CGFloat = 0
-    @State private var contentHeight: CGFloat = 0
-    @State private var viewportHeight: CGFloat = 0
-    @State private var isScrolling = false
+    @State private var metrics = ScrollMetrics()
     @State private var entries: [ClipboardItem] = []
 
     var body: some View {
@@ -116,27 +112,25 @@ struct MenuBarView: View {
     private func entryList(_ entries: [ClipboardItem]) -> some View {
         ScrollView {
             LazyVStack(spacing: 0) {
-                let displayed = entries
-                ForEach(Array(displayed.enumerated()), id: \.element.id) { index, entry in
+                let firstID = entries.first?.id
+                let lastID = entries.last?.id
+                ForEach(entries) { entry in
+                    let action = actionFor(entry)
                     EntryRowView(
                         entry: entry,
-                        isTopmost: index == 0,
-                        isHovered: hoveredEntryID == entry.id,
+                        isTopmost: entry.id == firstID,
                         isCopied: copiedEntryID == entry.id,
-                        action: actionFor(entry),
+                        action: action,
                         loadImageData: { try? storage.imageData(for: entry.id) }
                     )
                     .contentShape(Rectangle())
                     .onTapGesture { copyEntry(entry) }
-                    .onHover { hovering in
-                        hoveredEntryID = hovering ? entry.id : nil
-                    }
                     .contextMenu {
                         Button("Copy") { copyEntry(entry) }
                         Button(entry.isPinned ? "Unpin" : "Pin") {
                             try? storage.togglePin(entryWithID: entry.id)
                         }
-                        if let action = actionFor(entry) {
+                        if let action {
                             Button(action.label) { action.perform() }
                         }
                         Divider()
@@ -145,7 +139,7 @@ struct MenuBarView: View {
                         }
                     }
 
-                    if index < displayed.count - 1 {
+                    if entry.id != lastID {
                         Divider()
                     }
                 }
@@ -154,36 +148,16 @@ struct MenuBarView: View {
         }
         .scrollIndicators(.never)
         .onScrollGeometryChange(for: ScrollGeometry.self) { $0 } action: { _, geo in
-            scrollOffset = geo.contentOffset.y
-            contentHeight = geo.contentSize.height
-            viewportHeight = geo.bounds.height
+            metrics.offset = geo.contentOffset.y
+            metrics.contentHeight = geo.contentSize.height
+            metrics.viewportHeight = geo.bounds.height
         }
         .onScrollPhaseChange { _, newPhase in
-            isScrolling = newPhase != .idle
+            metrics.isScrolling = newPhase != .idle
         }
         .overlay(alignment: .topTrailing) {
-            customScrollIndicator
+            ScrollIndicator(metrics: metrics)
         }
-    }
-
-    @ViewBuilder
-    private var customScrollIndicator: some View {
-        let needsScroll = contentHeight > viewportHeight + 1
-        let viewportRatio = min(max(viewportHeight / max(contentHeight, 1), 0.1), 1.0)
-        let indicatorHeight = max(viewportHeight * viewportRatio, 24)
-        let trackRange = max(viewportHeight - indicatorHeight, 0)
-        let scrollableRange = max(contentHeight - viewportHeight, 1)
-        let progress = min(max(scrollOffset / scrollableRange, 0), 1)
-        let yOffset = progress * trackRange
-
-        Capsule()
-            .fill(.primary.opacity(0.30))
-            .frame(width: 3, height: indicatorHeight)
-            .padding(.trailing, 3)
-            .offset(y: yOffset)
-            .opacity(needsScroll && isScrolling ? 1 : 0)
-            .animation(.easeOut(duration: 0.4), value: isScrolling)
-            .allowsHitTesting(false)
     }
 
     // MARK: - Actions
@@ -256,5 +230,40 @@ struct MenuBarView: View {
         if alert.runModal() == .alertFirstButtonReturn {
             try? storage.deleteAll()
         }
+    }
+}
+
+/// Scroll geometry lives here rather than in `MenuBarView`'s own state. `@Observable`
+/// invalidates only the views that *read* a property, so the per-frame geometry writes
+/// reach `ScrollIndicator` alone and never rebuild the entry list behind it.
+@Observable
+private final class ScrollMetrics {
+    var offset: CGFloat = 0
+    var contentHeight: CGFloat = 0
+    var viewportHeight: CGFloat = 0
+    var isScrolling = false
+}
+
+private struct ScrollIndicator: View {
+    let metrics: ScrollMetrics
+
+    var body: some View {
+        let contentHeight = metrics.contentHeight
+        let viewportHeight = metrics.viewportHeight
+        let needsScroll = contentHeight > viewportHeight + 1
+        let viewportRatio = min(max(viewportHeight / max(contentHeight, 1), 0.1), 1.0)
+        let indicatorHeight = max(viewportHeight * viewportRatio, 24)
+        let trackRange = max(viewportHeight - indicatorHeight, 0)
+        let scrollableRange = max(contentHeight - viewportHeight, 1)
+        let progress = min(max(metrics.offset / scrollableRange, 0), 1)
+
+        Capsule()
+            .fill(.primary.opacity(0.30))
+            .frame(width: 3, height: indicatorHeight)
+            .padding(.trailing, 3)
+            .offset(y: progress * trackRange)
+            .opacity(needsScroll && metrics.isScrolling ? 1 : 0)
+            .animation(.easeOut(duration: 0.4), value: metrics.isScrolling)
+            .allowsHitTesting(false)
     }
 }

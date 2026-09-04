@@ -12,11 +12,13 @@ struct EntryRowView: View {
 
     let entry: ClipboardItem
     let isTopmost: Bool
-    let isHovered: Bool
     let isCopied: Bool
     let action: Action?
     let loadImageData: @MainActor () -> Data?
 
+    // Owned here rather than passed down: hover changes many times a second, and routing it
+    // through the list's state rebuilt every row on every mouse move.
+    @State private var isHovered = false
     @State private var buttonHovered = false
     @State private var cachedThumbnail: NSImage?
     @State private var imageLabel: String?
@@ -43,6 +45,7 @@ struct EntryRowView: View {
                 RoundedRectangle(cornerRadius: 6, style: .continuous)
                     .fill(rowFill)
             )
+            .onHover { isHovered = $0 }
             .task(id: entry.id) {
                 await loadThumbnail()
             }
