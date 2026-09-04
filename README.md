@@ -143,10 +143,12 @@ Stash/
 │   ├── StashApp.swift          # Entry point + AppController
 │   ├── Model/
 │   │   ├── ClipboardEntry.swift    # SwiftData model
+│   │   ├── ClipboardItem.swift     # Value-type snapshot handed to views
 │   │   └── ContentType.swift       # Content type enum + detection
 │   ├── Services/
 │   │   ├── ClipboardMonitor.swift  # Pasteboard polling + source app detection
 │   │   ├── StorageManager.swift    # SwiftData persistence + encryption
+│   │   ├── ThumbnailStore.swift    # Bounded image thumbnail cache
 │   │   └── PasteService.swift      # Paste-from-history
 │   ├── Views/
 │   │   ├── MenuBarView.swift       # Translucent popover with entry list and controls
@@ -154,10 +156,11 @@ Stash/
 │   │   └── SettingsView.swift      # Preferences UI
 │   └── Support/
 │       ├── CryptoService.swift     # AES-256-GCM encryption + Keychain key storage
+│       ├── ImageFormat.swift       # Image type sniffing
 │       ├── Preferences.swift       # UserDefaults wrapper
 │       ├── PasteboardConstants.swift
 │       └── UpdaterController.swift # Sparkle auto-update integration
-└── StashTests/                 # 88 tests across 7 files
+└── StashTests/                 # 106 tests across 9 files
     ├── Model/
     ├── Services/
     └── Support/
