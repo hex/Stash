@@ -274,7 +274,12 @@ final class AppController {
     func openHistory() {
         popover?.performClose(nil)
 
-        if let existing = historyWindow, existing.isVisible {
+        // A miniaturized window reports isVisible == false, so checking visibility alone
+        // would orphan it and build a second one. Deminiaturize and reuse instead.
+        if let existing = historyWindow {
+            if existing.isMiniaturized {
+                existing.deminiaturize(nil)
+            }
             existing.makeKeyAndOrderFront(nil)
             NSApp.activate(ignoringOtherApps: true)
             return
