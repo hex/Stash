@@ -23,12 +23,14 @@
 - **Menu bar popover** -- translucent frosted-glass popover with colored content-type badges and divider-separated entries
 - **Image thumbnails** -- inline image previews in the entry list, with a preview button to open full images
 - **Context menus** -- right-click any entry to Copy, Pin/Unpin, Preview (images), or Delete
+- **Full history window** -- a resizable window listing every stored entry, opened from the popover or Settings
+- **Search** -- filter by content, URL, file path, or source app; case- and diacritic-insensitive
 - **Encrypted storage** -- all clipboard content is AES-256-GCM encrypted at rest with a Keychain-stored key
 - **Animated capture feedback** -- the menu bar icon flashes when a new entry is recorded
 - **Password manager filtering** -- automatically skips entries from 1Password, KeePassXC, and other apps that mark clipboard content as concealed or transient
 - **App exclusion** -- block specific apps from being recorded, with a running apps picker for easy selection
 - **Consecutive dedup** -- identical back-to-back copies are stored once
-- **Pinned entries** -- pinned entries are protected from history limit pruning
+- **Pinned entries** -- pinned entries sort to the top and are protected from history limit pruning
 - **Auto-expiry** -- optionally delete entries older than 24 hours, 7 days, or 30 days
 - **Clear on quit** -- optionally wipe all history when the app terminates
 - **Time Machine exclusion** -- the SwiftData store is excluded from backups
@@ -88,6 +90,7 @@ Open via the gear icon in the popover. Configurable options:
 | Setting | Default | Range |
 |---|---|---|
 | History limit | 500 | 10 - 10,000 entries |
+| Show in popover | 20 | 5 - 200 entries |
 | Launch at login | Off | -- |
 | Excluded apps | None | Pick from running apps or enter bundle IDs |
 | Retention | Forever | Never / 24 hours / 7 days / 30 days |
@@ -152,15 +155,17 @@ Stash/
 │   │   └── PasteService.swift      # Paste-from-history
 │   ├── Views/
 │   │   ├── MenuBarView.swift       # Translucent popover with entry list and controls
+│   │   ├── HistoryWindowView.swift # Resizable full-history browser with search
 │   │   ├── EntryRowView.swift      # Entry row with colored badge and content preview
 │   │   └── SettingsView.swift      # Preferences UI
 │   └── Support/
 │       ├── CryptoService.swift     # AES-256-GCM encryption + Keychain key storage
+│       ├── HistoryFilter.swift     # Shared search filter over entries
 │       ├── ImageFormat.swift       # Image type sniffing
 │       ├── Preferences.swift       # UserDefaults wrapper
 │       ├── PasteboardConstants.swift
 │       └── UpdaterController.swift # Sparkle auto-update integration
-└── StashTests/                 # 114 tests across 10 files
+└── StashTests/                 # 118 tests across 10 files
     ├── Model/
     ├── Services/
     └── Support/

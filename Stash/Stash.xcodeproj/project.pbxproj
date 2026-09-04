@@ -26,6 +26,7 @@
 		77DBCAC07611BCA0CB69F5FB /* PasteService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 95D0B204806C2BD53904C7CE /* PasteService.swift */; };
 		7D5AFFCC033CA29E68F72B63 /* CryptoServiceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5EA3FEAE80841B3856041847 /* CryptoServiceTests.swift */; };
 		A54DFE329CCFD7626C2C3096 /* PreferencesTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C1BAF2E42C8667F827D380BE /* PreferencesTests.swift */; };
+		AA54DA80B917F1A4A520AA8E /* HistoryWindowView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3553EA0DD03FDEC7AF617A74 /* HistoryWindowView.swift */; };
 		B40ABE2D442B6197F78A09D6 /* MenuBarView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 05CC4F69A65849188846F652 /* MenuBarView.swift */; };
 		B790160B7DAAC2FA787342DD /* StashApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 18DBCC4E2EF53EB5BDC7A134 /* StashApp.swift */; };
 		CADDA1DFC470257E3F084CDC /* Preferences.swift in Sources */ = {isa = PBXBuildFile; fileRef = B49BB01FA9B8AC8C4CA65511 /* Preferences.swift */; };
@@ -61,6 +62,7 @@
 		1F492E4F7F74825D3092524A /* CryptoService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CryptoService.swift; sourceTree = "<group>"; };
 		320F7C11A1446E642285C4D4 /* Stash.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = Stash.entitlements; sourceTree = "<group>"; };
 		336AEB429DB905D6E693F12A /* PasteboardConstants.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PasteboardConstants.swift; sourceTree = "<group>"; };
+		3553EA0DD03FDEC7AF617A74 /* HistoryWindowView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HistoryWindowView.swift; sourceTree = "<group>"; };
 		415583651345C6D9E21AE95C /* ImageFormat.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ImageFormat.swift; sourceTree = "<group>"; };
 		4D2EF50DA837BA41181DE1DA /* ImageFormatTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ImageFormatTests.swift; sourceTree = "<group>"; };
 		4D7DF77EABB77C38A1689BE7 /* ThumbnailStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ThumbnailStore.swift; sourceTree = "<group>"; };
@@ -186,6 +188,7 @@
 			isa = PBXGroup;
 			children = (
 				1D72F8DD92937F33B5E5F8C7 /* EntryRowView.swift */,
+				3553EA0DD03FDEC7AF617A74 /* HistoryWindowView.swift */,
 				05CC4F69A65849188846F652 /* MenuBarView.swift */,
 				F3BFE30BEA627EB8AB7EB8BE /* SettingsView.swift */,
 			);
@@ -319,6 +322,7 @@
 				47846BD20C9C408EE004845D /* CryptoService.swift in Sources */,
 				0CA62297506C140A38D8C8B9 /* EntryRowView.swift in Sources */,
 				0D6BA4163B86322A4305C808 /* HistoryFilter.swift in Sources */,
+				AA54DA80B917F1A4A520AA8E /* HistoryWindowView.swift in Sources */,
 				EE7EC17518822D51B3D596BF /* ImageFormat.swift in Sources */,
 				B40ABE2D442B6197F78A09D6 /* MenuBarView.swift in Sources */,
 				77DBCAC07611BCA0CB69F5FB /* PasteService.swift in Sources */,

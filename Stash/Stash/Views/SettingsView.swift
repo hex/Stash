@@ -10,6 +10,7 @@ struct SettingsView: View {
     var onExcludedAppsChanged: (() -> Void)?
     var onClearHistory: (() -> Void)?
     var onCheckForUpdates: (() -> Void)?
+    var onOpenHistory: (() -> Void)?
 
     @State private var launchAtLogin = SMAppService.mainApp.status == .enabled
     @State private var isPickingApp = false
@@ -31,6 +32,23 @@ struct SettingsView: View {
                     TextField("", value: $preferences.historyLimit, format: .number)
                         .frame(width: 80)
                     Text("entries")
+                        .foregroundStyle(.secondary)
+                }
+
+                HStack {
+                    Text("Show in popover:")
+                    TextField("", value: $preferences.popoverEntryCount, format: .number)
+                        .frame(width: 80)
+                    Text("entries")
+                        .foregroundStyle(.secondary)
+                }
+
+                HStack {
+                    Button("Show Full History…") {
+                        onOpenHistory?()
+                    }
+                    Text("Browse and search every stored entry.")
+                        .font(.caption)
                         .foregroundStyle(.secondary)
                 }
 

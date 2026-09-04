@@ -10,17 +10,33 @@ struct MenuBarView: View {
     let onPaste: (ClipboardItem) -> Bool
     let onPauseChanged: (Bool) -> Void
     let onOpenSettings: () -> Void
+    let onOpenHistory: () -> Void
 
     @State private var copiedEntryID: PersistentIdentifier?
     @State private var metrics = ScrollMetrics()
     @State private var entries: [ClipboardItem] = []
+    @State private var query = ""
+
+    /// An empty query shows a short quick-access list; a search reaches the whole
+    /// history, since the point of searching is to find what scrolling would not.
+    private var visibleEntries: [ClipboardItem] {
+        query.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+            ? Array(entries.prefix(preferences.popoverEntryCount))
+            : HistoryFilter.apply(entries, query: query)
+    }
 
     var body: some View {
         VStack(spacing: 0) {
-            if entries.isEmpty {
+            if !entries.isEmpty {
+                searchField
+                Divider()
+            }
+
+            let visible = visibleEntries
+            if visible.isEmpty {
                 emptyState
             } else {
-                entryList(entries)
+                entryList(visible)
             }
 
             Divider()
@@ -55,6 +71,16 @@ struct MenuBarView: View {
             }
             .buttonStyle(.plain)
             .help("Settings")
+
+            Button {
+                onOpenHistory()
+            } label: {
+                Image(systemName: "clock.arrow.circlepath")
+                    .font(.system(size: 14, weight: .regular))
+                    .foregroundStyle(.secondary)
+            }
+            .buttonStyle(.plain)
+            .help("Show full history")
 
             Spacer()
 
@@ -91,20 +117,49 @@ struct MenuBarView: View {
     // MARK: - Empty state
 
     private var emptyState: some View {
-        VStack(spacing: 8) {
+        let searching = !query.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+        return VStack(spacing: 8) {
             Spacer()
-            Image(systemName: "tray")
+            Image(systemName: searching ? "magnifyingglass" : "tray")
                 .font(.system(size: 26, weight: .light))
                 .foregroundStyle(.tertiary)
-            Text("No clipboard history")
+            Text(searching ? "No matches" : "No clipboard history")
                 .font(.body)
                 .foregroundStyle(.secondary)
-            Text("Copy something to get started")
+            Text(searching ? "Try a different search" : "Copy something to get started")
                 .font(.caption)
                 .foregroundStyle(.tertiary)
             Spacer()
         }
         .frame(maxWidth: .infinity)
+    }
+
+    // MARK: - Search
+
+    private var searchField: some View {
+        HStack(spacing: 6) {
+            Image(systemName: "magnifyingglass")
+                .font(.system(size: 12))
+                .foregroundStyle(.tertiary)
+
+            TextField("Search", text: $query)
+                .textFieldStyle(.plain)
+                .font(.system(size: 12))
+
+            if !query.isEmpty {
+                Button {
+                    query = ""
+                } label: {
+                    Image(systemName: "xmark.circle.fill")
+                        .font(.system(size: 12))
+                        .foregroundStyle(.tertiary)
+                }
+                .buttonStyle(.plain)
+                .help("Clear search")
+            }
+        }
+        .padding(.horizontal, 12)
+        .padding(.vertical, 8)
     }
 
     // MARK: - Entry list

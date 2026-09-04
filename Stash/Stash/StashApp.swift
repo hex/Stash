@@ -30,6 +30,7 @@ final class AppController {
     private var statusItem: NSStatusItem?
     private var popover: NSPopover?
     private var settingsWindow: NSWindow?
+    private var historyWindow: NSWindow?
     private var globalClickMonitor: Any?
     private var localClickMonitor: Any?
     private var pauseToggleMonitor: Any?
@@ -107,6 +108,9 @@ final class AppController {
                 onPauseChanged: { [weak self] isPaused in self?.setPaused(isPaused) },
                 onOpenSettings: { [weak self] in
                     self?.openSettings()
+                },
+                onOpenHistory: { [weak self] in
+                    self?.openHistory()
                 }
             )
         )
@@ -267,6 +271,38 @@ final class AppController {
         }
     }
 
+    func openHistory() {
+        popover?.performClose(nil)
+
+        if let existing = historyWindow, existing.isVisible {
+            existing.makeKeyAndOrderFront(nil)
+            NSApp.activate(ignoringOtherApps: true)
+            return
+        }
+
+        let historyView = HistoryWindowView(
+            storage: storage,
+            preferences: preferences,
+            onPaste: { [weak self] entry in self?.paste(entry) ?? false }
+        )
+
+        let window = NSWindow(
+            contentRect: NSRect(x: 0, y: 0, width: 560, height: 640),
+            styleMask: [.titled, .closable, .resizable, .miniaturizable],
+            backing: .buffered,
+            defer: false
+        )
+        window.title = "Clipboard History"
+        window.contentViewController = NSHostingController(rootView: historyView)
+        window.setFrameAutosaveName("StashHistoryWindow")
+        window.center()
+        window.isReleasedWhenClosed = false
+        self.historyWindow = window
+
+        window.makeKeyAndOrderFront(nil)
+        NSApp.activate(ignoringOtherApps: true)
+    }
+
     func openSettings() {
         popover?.performClose(nil)
 
@@ -286,6 +322,9 @@ final class AppController {
             },
             onCheckForUpdates: { [weak self] in
                 self?.updater.checkForUpdates()
+            },
+            onOpenHistory: { [weak self] in
+                self?.openHistory()
             }
         )
 

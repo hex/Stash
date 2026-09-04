@@ -40,6 +40,10 @@ final class PreferencesTests: XCTestCase {
         XCTAssertFalse(prefs.isPaused)
     }
 
+    func testDefaultPopoverEntryCount() {
+        XCTAssertEqual(prefs.popoverEntryCount, 20)
+    }
+
     // MARK: - Clamping
 
     func testHistoryLimitClampedToMinimum() {
@@ -55,6 +59,21 @@ final class PreferencesTests: XCTestCase {
     func testHistoryLimitAcceptsValidValue() {
         prefs.historyLimit = 200
         XCTAssertEqual(prefs.historyLimit, 200)
+    }
+
+    func testPopoverEntryCountClampedToMinimum() {
+        prefs.popoverEntryCount = 1
+        XCTAssertEqual(prefs.popoverEntryCount, 5)
+    }
+
+    func testPopoverEntryCountClampedToMaximum() {
+        prefs.popoverEntryCount = 5_000
+        XCTAssertEqual(prefs.popoverEntryCount, 200)
+    }
+
+    func testPopoverEntryCountAcceptsValidValue() {
+        prefs.popoverEntryCount = 50
+        XCTAssertEqual(prefs.popoverEntryCount, 50)
     }
 
     func testPollingIntervalClampedToMinimum() {

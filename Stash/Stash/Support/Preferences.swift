@@ -15,6 +15,7 @@ final class Preferences {
         static let retentionDays = "retentionDays"
         static let clearOnQuit = "clearOnQuit"
         static let appearance = "appearance"
+        static let popoverEntryCount = "popoverEntryCount"
     }
 
     private enum Limits {
@@ -24,6 +25,9 @@ final class Preferences {
         static let pollingMin = 0.1
         static let pollingMax = 5.0
         static let pollingDefault = 0.5
+        static let popoverCountMin = 5
+        static let popoverCountMax = 200
+        static let popoverCountDefault = 20
     }
 
     var historyLimit: Int {
@@ -36,6 +40,25 @@ final class Preferences {
         set {
             withMutation(keyPath: \.historyLimit) {
                 defaults.set(min(max(newValue, Limits.historyMin), Limits.historyMax), forKey: Keys.historyLimit)
+            }
+        }
+    }
+
+    /// How many entries the popover shows. The full history lives in the history window;
+    /// the popover stays a short quick-access list.
+    var popoverEntryCount: Int {
+        get {
+            access(keyPath: \.popoverEntryCount)
+            let stored = defaults.integer(forKey: Keys.popoverEntryCount)
+            if stored == 0 { return Limits.popoverCountDefault }
+            return min(max(stored, Limits.popoverCountMin), Limits.popoverCountMax)
+        }
+        set {
+            withMutation(keyPath: \.popoverEntryCount) {
+                defaults.set(
+                    min(max(newValue, Limits.popoverCountMin), Limits.popoverCountMax),
+                    forKey: Keys.popoverEntryCount
+                )
             }
         }
     }
