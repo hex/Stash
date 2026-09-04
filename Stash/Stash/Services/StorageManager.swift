@@ -98,7 +98,7 @@ final class StorageManager {
         descriptor.fetchLimit = historyLimit
         let entries = try readContext.fetch(descriptor)
 
-        return entries.map { entry in
+        let items = entries.map { entry in
             ClipboardItem(
                 id: entry.persistentModelID,
                 timestamp: entry.timestamp,
@@ -110,6 +110,10 @@ final class StorageManager {
                 isPinned: entry.isPinned
             )
         }
+
+        // Bool isn't Comparable, so SortDescriptor can't do this in the fetch. Partitioning
+        // the already timestamp-ordered result keeps each group in date order.
+        return items.filter(\.isPinned) + items.filter { !$0.isPinned }
     }
 
     /// Fetches and decrypts one entry's image payload, or nil if the row is gone.

@@ -100,6 +100,33 @@ final class StorageManagerTests: XCTestCase {
         XCTAssertTrue(entries.contains(where: { $0.plainText == "Pinned" }), "Pinned entry should survive pruning")
     }
 
+    // MARK: - Pinned entries sort first
+
+    func testPinnedEntrySortsAboveNewerUnpinnedEntry() throws {
+        let older = try storage.save(contentType: .plainText, plainText: "Older pinned", sourceAppBundleID: nil, sourceAppName: nil)!
+        older.timestamp = Date(timeIntervalSince1970: 1_000)
+        let newer = try storage.save(contentType: .plainText, plainText: "Newer unpinned", sourceAppBundleID: nil, sourceAppName: nil)!
+        newer.timestamp = Date(timeIntervalSince1970: 2_000)
+
+        try storage.togglePin(entryWithID: older.persistentModelID)
+
+        let entries = try storage.fetchAll()
+        XCTAssertEqual(entries.map(\.plainText), ["Older pinned", "Newer unpinned"])
+    }
+
+    func testPinnedEntriesKeepTimestampOrderAmongThemselves() throws {
+        let first = try storage.save(contentType: .plainText, plainText: "Pinned older", sourceAppBundleID: nil, sourceAppName: nil)!
+        first.timestamp = Date(timeIntervalSince1970: 1_000)
+        let second = try storage.save(contentType: .plainText, plainText: "Pinned newer", sourceAppBundleID: nil, sourceAppName: nil)!
+        second.timestamp = Date(timeIntervalSince1970: 2_000)
+
+        try storage.togglePin(entryWithID: first.persistentModelID)
+        try storage.togglePin(entryWithID: second.persistentModelID)
+
+        let entries = try storage.fetchAll()
+        XCTAssertEqual(entries.map(\.plainText), ["Pinned newer", "Pinned older"])
+    }
+
     // MARK: - Delete all
 
     func testDeleteAll() throws {
